@@ -1,23 +1,14 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "binary"
+  provider          = "prisma-client-js"
+  engineType        = "binary"
 }
-
 datasource db {
   provider = "postgresql"
 }
-
 enum Role {
   USER
   ADMIN
 }
-
 enum OrderStatus {
   PENDING
   PROCESSING
@@ -25,199 +16,169 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
-
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
   REFUNDED
 }
-
 model User {
-  id           String  @id @default(uuid())
-  email        String  @unique
-  password     String
-  firstName    String?
-  lastName     String?
-  role         Role    @default(USER)
+  id String @id @default(uuid())
+  email String @unique
+  password String
+  firstName String?
+  lastName String?
+  role Role @default(USER)
   refreshToken String?
-
-  //Relations
-  orders   Order[]
-  carts    Cart[]
+  orders Order[]
+  carts Cart[]
   payments Payment[]
-
+  reviews Review[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([email])
-  @@map("users") // the name of the table
+  @@map("users")
 }
-
 model Product {
-  id          String  @id @default(uuid())
-  name        String
+  id String @id @default(uuid())
+  name String
   description String?
-  price       Decimal @db.Decimal(10, 2)
-  stock       Int     @default(0)
-  sku         String  @unique
-  imageUrl    String?
-  isActive    Boolean @default(true)
-
-  // Relations
+  price Decimal @db.Decimal(10, 2)
+  stock Int @default(0)
+  sku String @unique
+  imageUrl String?
+  isActive Boolean @default(true)
   orderItems OrderItem[]
-  cartItems  CartItem[]
-
+  cartItems CartItem[]
   categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  // Timestamps
-
+  category Category @relation(fields: [categoryId], references: [id])
+  reviews Review[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([sku])
   @@index([categoryId])
   @@index([isActive])
-  @@map("products") // the name of the table
+  @@map("products")
 }
-
 model Category {
-  id          String  @id @default(uuid())
-  name        String
+  id String @id @default(uuid())
+  name String
   description String?
-  slug        String  @unique
-  imageUrl    String?
-  isActive    Boolean @default(true)
-
+  slug String @unique
+  imageUrl String?
+  isActive Boolean @default(true)
   products Product[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([slug])
   @@index([isActive])
   @@map("categories")
 }
-
 model OrderItem {
-  id        String  @id @default(uuid())
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  id String @id @default(uuid())
+  quantity Int
+  price Decimal @db.Decimal(10, 2)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
-
+  product Product @relation(fields: [productId], references: [id])
   orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
 }
-
 model CartItem {
-  id        String  @id @default(uuid())
-  quantity  Int     @default(1)
+  id String @id @default(uuid())
+  quantity Int @default(1)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
-
+  product Product @relation(fields: [productId], references: [id])
   cartId String
-  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
-
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@unique([cartId, productId])
   @@index([cartId])
   @@index([productId])
   @@map("carts_items")
 }
-
 model Order {
-  id          String      @id @default(uuid())
-  orderNumber String      @unique @default(cuid())
-  status      OrderStatus
-  totalAmount Decimal     @db.Decimal(10, 2)
-
+  id String @id @default(uuid())
+  orderNumber String @unique @default(cuid())
+  status OrderStatus
+  totalAmount Decimal @db.Decimal(10, 2)
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   cartId String?
-  cart   Cart?   @relation(fields: [cartId], references: [id])
-
+  cart Cart? @relation(fields: [cartId], references: [id])
   shippingAddress String?
-
   orderItems OrderItem[]
-  payment    Payment?
-
+  payment Payment?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([userId])
   @@index([orderNumber])
   @@index([status])
   @@map("orders")
 }
-
 model Cart {
-  id     String @id @default(uuid())
+  id String @id @default(uuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  orders     Order[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
   checkedOut Boolean @default(false)
-
   cartItems CartItem[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([userId])
   @@map("carts")
 }
-
-model Discount {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  type        String // PERCENTAGE | FIXED
-  value       Decimal  @db.Decimal(10, 2)
-  isActive    Boolean  @default(true)
-  expiresAt   DateTime
-  description String?
-  minAmount   Decimal? @db.Decimal(10, 2) // Montant minimum pour appliquer
-  maxUses     Int? // Nombre maximum d'utilisations
-  usedCount   Int      @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([code])
-  @@index([isActive, expiresAt])
-  @@map("discounts")
-}
-
 model Payment {
-  id            String        @id @default(uuid())
-  amount        Decimal       @db.Decimal(10, 2)
-  status        PaymentStatus @default(PENDING)
-  currency      String        @default("TND")
+  id String @id @default(uuid())
+  amount Decimal @db.Decimal(10, 2)
+  status PaymentStatus @default(PENDING)
+  currency String @default("TND")
   paymentMethod String?
   transactionId String?
-
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([orderId])
   @@index([userId])
   @@index([transactionId])
   @@map("payments")
+}
+model Discount {
+  id String @id @default(uuid())
+  code String @unique
+  type String
+  value Decimal @db.Decimal(10, 2)
+  isActive Boolean @default(true)
+  expiresAt DateTime
+  description String?
+  minAmount Decimal? @db.Decimal(10, 2)
+  maxUses Int?
+  usedCount Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([code])
+  @@index([isActive, expiresAt])
+  @@map("discounts")
+}
+model Review {
+  id String @id @default(uuid())
+  rating Int
+  comment String?
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([productId])
+  @@index([userId])
+  @@map("reviews")
 }

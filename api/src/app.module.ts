@@ -12,6 +12,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { FlouciModule } from './modules/payments/flouci/flouci.module';
 import { CartsModule } from './modules/carts/carts.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { DiscountsModule } from './modules/discounts/discounts.module';
+import { AiModule } from './modules/ai/ai.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
 
 @Module({
   imports: [
@@ -33,6 +37,10 @@ import { CartsModule } from './modules/carts/carts.module';
     OrdersModule,
     FlouciModule,
     CartsModule,
+    ReviewsModule,
+    DiscountsModule,
+    AiModule,
+    WorkflowsModule,
   ],
   controllers: [AppController],
   providers: [

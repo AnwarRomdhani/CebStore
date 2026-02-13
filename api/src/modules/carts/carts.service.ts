@@ -22,15 +22,15 @@ interface CartItemWithProduct {
   product: {
     id: string;
     name: string;
-    description: string;
-    price: unknown;
+    description: string | null;
+    price: Prisma.Decimal;
     imageUrl: string | null;
     stock: number;
   };
 }
 
 interface DiscountType {
-  value: unknown;
+  value: Prisma.Decimal;
   type: string;
 }
 
@@ -119,6 +119,10 @@ export class CartsService {
       include: { product: true },
     });
 
+    if (!cartItemWithProduct) {
+      throw new NotFoundException('CartItem not found after creation');
+    }
+
     return this.mapToCartItemDto(cartItemWithProduct);
   }
 
@@ -138,7 +142,7 @@ export class CartsService {
 
     // Calcul du sous-total
     const subtotal = cartItems.reduce((sum, item) => {
-      return sum + parseFloat(item.product.price.toString()) * item.quantity;
+      return sum + Number(item.product.price) * item.quantity;
     }, 0);
 
     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -197,6 +201,10 @@ export class CartsService {
       where: { id: updatedItem.id },
       include: { product: true },
     });
+
+    if (!updatedItemWithProduct) {
+      throw new NotFoundException('CartItem not found after update');
+    }
 
     return this.mapToCartItemDto(updatedItemWithProduct);
   }
@@ -329,7 +337,7 @@ export class CartsService {
     // 4. Calcul du total
     const subtotal = cartItems.reduce(
       (sum, item) =>
-        sum + parseFloat(item.product.price.toString()) * item.quantity,
+        sum + Number(item.product.price) * item.quantity,
       0,
     );
 
@@ -439,17 +447,16 @@ export class CartsService {
    * Mapper CartItem vers CartItemDto
    */
   private mapToCartItemDto(cartItem: CartItemWithProduct): CartItemDto {
+    const priceNumber = Number(cartItem.product.price);
     return {
       id: cartItem.id,
       productId: cartItem.productId,
       productName: cartItem.product.name,
-      productDescription: cartItem.product.description,
-      productPrice: cartItem.product.price.toString(),
-      productImage: cartItem.product.imageUrl,
+      productDescription: cartItem.product.description || '',
+      productPrice: priceNumber.toString(),
+      productImage: cartItem.product.imageUrl || undefined,
       quantity: cartItem.quantity,
-      subtotal: (
-        parseFloat(cartItem.product.price.toString()) * cartItem.quantity
-      ).toFixed(2),
+      subtotal: (priceNumber * cartItem.quantity).toFixed(2),
       productStock: cartItem.product.stock,
     };
   }
@@ -458,7 +465,7 @@ export class CartsService {
    * Calculer la remise
    */
   private calculateDiscount(discount: DiscountType, subtotal: number): number {
-    const discountValue = parseFloat(discount.value.toString());
+    const discountValue = Number(discount.value);
 
     if (discount.type === 'PERCENTAGE') {
       return (subtotal * discountValue) / 100;
