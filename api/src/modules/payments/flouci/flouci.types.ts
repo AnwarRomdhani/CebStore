@@ -117,6 +117,11 @@ export interface FlouciWebhookData {
 }
 
 /**
+ * Alias pour FlouciWebhookData (compatibilité)
+ */
+export type FlouciWebhookDto = FlouciWebhookData;
+
+/**
  * Configuration de l'application Flouci
  */
 export interface FlouciAppConfig {
@@ -202,11 +207,14 @@ export class FlouciException extends Error {
   code: FlouciErrorCode;
   details?: Record<string, unknown>;
 
-  constructor(code: FlouciErrorCode, message: string, details?: Record<string, unknown>) {
+  constructor(
+    code: FlouciErrorCode,
+    message: string,
+    details?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = 'FlouciException';
     this.code = code;
     this.details = details;
   }
 }
-

@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -10,10 +11,23 @@ import { Category, Prisma, Product } from '@prisma/client';
 import { ProductResponseDto } from './dto/product-response.dto';
 import { QueryProductDto } from './dto/query-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { CacheService } from 'src/modules/cache/cache.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ProductsService.name);
+  private readonly cacheEnabled: boolean;
+  private readonly productsTTL: number;
+
+  constructor(
+    private prisma: PrismaService,
+    private cacheService: CacheService,
+    private configService: ConfigService,
+  ) {
+    this.cacheEnabled = this.configService.get<string>('REDIS_URL') !== undefined;
+    this.productsTTL = this.configService.get<number>('CACHE_PRODUCTS_TTL', 1800);
+  }
 
   // Create product
   async create(
@@ -53,6 +67,18 @@ export class ProductsService {
   }> {
     const { category, isActive, search, page = 1, limit = 10 } = queryDto;
 
+    // Générer une clé de cache unique basée sur les paramètres
+    const cacheKey = `products:list:${JSON.stringify(queryDto)}`;
+
+    // Vérifier le cache si activé
+    if (this.cacheEnabled) {
+      const cached = await this.cacheService.get<typeof cached>(cacheKey);
+      if (cached) {
+        this.logger.debug(`Cache hit: ${cacheKey}`);
+        return cached;
+      }
+    }
+
     const where: Prisma.ProductWhereInput = {};
 
     if (category) {
@@ -70,19 +96,20 @@ export class ProductsService {
       ];
     }
 
-    const total = await this.prisma.product.count({ where });
+    const [total, products] = await Promise.all([
+      this.prisma.product.count({ where }),
+      this.prisma.product.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          category: true,
+        },
+      }),
+    ]);
 
-    const products = await this.prisma.product.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        category: true,
-      },
-    });
-
-    return {
+    const result = {
       data: products.map((product) => this.formatProduct(product)),
       meta: {
         total,
@@ -91,10 +118,29 @@ export class ProductsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    // Mettre en cache
+    if (this.cacheEnabled) {
+      await this.cacheService.set(cacheKey, result, { ttl: this.productsTTL });
+      this.logger.debug(`Cache set: ${cacheKey}`);
+    }
+
+    return result;
   }
 
   // Get product by id
   async findOne(id: string): Promise<ProductResponseDto> {
+    const cacheKey = `product:${id}`;
+
+    // Vérifier le cache
+    if (this.cacheEnabled) {
+      const cached = await this.cacheService.get<typeof cached>(cacheKey);
+      if (cached) {
+        this.logger.debug(`Cache hit: ${cacheKey}`);
+        return cached;
+      }
+    }
+
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -105,7 +151,14 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    return this.formatProduct(product);
+    const result = this.formatProduct(product);
+
+    // Mettre en cache
+    if (this.cacheEnabled) {
+      await this.cacheService.set(cacheKey, result, { ttl: this.productsTTL });
+    }
+
+    return result;
   }
 
   // Update product
@@ -145,6 +198,14 @@ export class ProductsService {
         category: true,
       },
     });
+
+    // Invalider le cache
+    if (this.cacheEnabled) {
+      await Promise.all([
+        this.cacheService.del(`product:${id}`),
+        this.cacheService.delByPattern('products:list:*'),
+      ]);
+    }
 
     return this.formatProduct(updatedProduct);
   }

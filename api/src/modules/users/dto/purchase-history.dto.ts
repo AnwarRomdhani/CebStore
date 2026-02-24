@@ -122,7 +122,13 @@ export class PurchaseHistoryItemDto {
 
   @ApiProperty({
     description: 'Statut de la commande',
-    enum: { PENDING: 'PENDING', PROCESSING: 'PROCESSING', SHIPPED: 'SHIPPED', DELIVERED: 'DELIVERED', CANCELLED: 'CANCELLED' },
+    enum: {
+      PENDING: 'PENDING',
+      PROCESSING: 'PROCESSING',
+      SHIPPED: 'SHIPPED',
+      DELIVERED: 'DELIVERED',
+      CANCELLED: 'CANCELLED',
+    },
     example: 'DELIVERED',
   })
   status: string;
@@ -176,13 +182,13 @@ export class PurchaseStatsDto {
 
   @ApiProperty({
     description: 'Total dépensé (TND)',
-    example: 4500.00,
+    example: 4500.0,
   })
   totalSpent: number;
 
   @ApiProperty({
     description: 'Panier moyen (TND)',
-    example: 300.00,
+    example: 300.0,
   })
   averageOrderValue: number;
 
@@ -248,7 +254,13 @@ export class PurchaseHistoryQueryDto {
 
   @ApiPropertyOptional({
     description: 'Statut de commande',
-    enum: { PENDING: 'PENDING', PROCESSING: 'PROCESSING', SHIPPED: 'SHIPPED', DELIVERED: 'DELIVERED', CANCELLED: 'CANCELLED' },
+    enum: {
+      PENDING: 'PENDING',
+      PROCESSING: 'PROCESSING',
+      SHIPPED: 'SHIPPED',
+      DELIVERED: 'DELIVERED',
+      CANCELLED: 'CANCELLED',
+    },
     example: 'DELIVERED',
   })
   status?: string;
@@ -260,7 +272,7 @@ export class PurchaseHistoryQueryDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Nombre d\'éléments par page',
+    description: "Nombre d'éléments par page",
     example: 10,
   })
   limit?: number = 10;
@@ -294,7 +306,7 @@ export class PurchaseHistoryResponseDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Statistiques de l\'utilisateur',
+    description: "Statistiques de l'utilisateur",
     type: PurchaseStatsDto,
   })
   stats?: PurchaseStatsDto;

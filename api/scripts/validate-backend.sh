@@ -1,6 +1,3 @@
-#!/bin/bash
-
-# Validation script for the e-commerce backend
 echo "🔍 Starting backend validation..."
 
 # Colors for output

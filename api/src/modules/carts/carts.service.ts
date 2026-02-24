@@ -336,8 +336,7 @@ export class CartsService {
 
     // 4. Calcul du total
     const subtotal = cartItems.reduce(
-      (sum, item) =>
-        sum + Number(item.product.price) * item.quantity,
+      (sum, item) => sum + Number(item.product.price) * item.quantity,
       0,
     );
 

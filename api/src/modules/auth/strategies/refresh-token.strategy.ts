@@ -1,5 +1,3 @@
-// Refresh Token Strategy
-
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
@@ -25,7 +23,6 @@ export class RefreshTokenStrategy extends PassportStrategy(
     });
   }
 
-  // validate refresh token
   async validate(req: Request, payload: { sub: string; email: string }) {
     console.log('RefreshTokenStrategy.validate called');
     console.log('Payload', { sub: payload.sub, email: payload.email });

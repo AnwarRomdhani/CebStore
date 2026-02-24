@@ -9,7 +9,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  */
 export class PaymentInitiationResponseDto {
   @ApiProperty({
-    description: 'Succès de l\'opération',
+    description: "Succès de l'opération",
     example: true,
   })
   success: boolean;
@@ -45,7 +45,7 @@ export class PaymentInitiationResponseDto {
   currency: string;
 
   @ApiProperty({
-    description: 'Date d\'expiration',
+    description: "Date d'expiration",
     example: '2024-01-01T13:00:00Z',
   })
   expiresAt: string;
@@ -81,7 +81,12 @@ export class PaymentVerificationResponseDto {
 
   @ApiProperty({
     description: 'Statut du paiement',
-    enum: { PENDING: 'PENDING', SUCCESS: 'SUCCESS', FAILED: 'FAILED', EXPIRED: 'EXPIRED' },
+    enum: {
+      PENDING: 'PENDING',
+      SUCCESS: 'SUCCESS',
+      FAILED: 'FAILED',
+      EXPIRED: 'EXPIRED',
+    },
     example: 'SUCCESS',
   })
   status: string;
@@ -105,7 +110,7 @@ export class PaymentVerificationResponseDto {
   paidAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Message d\'erreur',
+    description: "Message d'erreur",
     example: 'Paiement effectué avec succès',
   })
   message?: string;
@@ -151,19 +156,19 @@ export class PaymentErrorResponseDto {
   success: false;
 
   @ApiProperty({
-    description: 'Code d\'erreur',
+    description: "Code d'erreur",
     example: 'INVALID_SIGNATURE',
   })
   error: string;
 
   @ApiProperty({
-    description: 'Message d\'erreur',
+    description: "Message d'erreur",
     example: 'Signature du webhook invalide',
   })
   message: string;
 
   @ApiPropertyOptional({
-    description: 'Détails de l\'erreur',
+    description: "Détails de l'erreur",
     example: { orderId: 'order-uuid-123' },
   })
   details?: Record<string, unknown>;
@@ -205,7 +210,13 @@ export class PaymentStatusResponseDto {
 
   @ApiProperty({
     description: 'Statut',
-    enum: { PENDING: 'PENDING', SUCCESS: 'SUCCESS', FAILED: 'FAILED', EXPIRED: 'EXPIRED', CANCELLED: 'CANCELLED' },
+    enum: {
+      PENDING: 'PENDING',
+      SUCCESS: 'SUCCESS',
+      FAILED: 'FAILED',
+      EXPIRED: 'EXPIRED',
+      CANCELLED: 'CANCELLED',
+    },
     example: 'SUCCESS',
   })
   status: string;
@@ -275,4 +286,3 @@ export class TestModeConfigResponseDto {
   })
   instructions: string;
 }
-

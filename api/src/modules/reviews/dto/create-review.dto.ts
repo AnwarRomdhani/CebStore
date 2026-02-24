@@ -3,17 +3,8 @@
  * @description Valide les données entrantes pour la création d'un avis
  */
 
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
-import {
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateReviewDto {
   @ApiProperty({
@@ -35,7 +26,7 @@ export class CreateReviewDto {
   rating: number;
 
   @ApiPropertyOptional({
-    description: 'Commentaire optionnel de l\'avis',
+    description: "Commentaire optionnel de l'avis",
     example: 'Excellent produit, je recommande vivement !',
     maxLength: 2000,
   })
@@ -43,4 +34,3 @@ export class CreateReviewDto {
   @IsString()
   comment?: string;
 }
-

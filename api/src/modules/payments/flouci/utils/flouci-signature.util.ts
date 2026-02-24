@@ -31,10 +31,16 @@ function encodeData(data: Record<string, unknown>): Buffer {
  * @param secretKey - Clé secrète
  * @returns Signature hexadécimale
  */
-export function generateSignature(data: Record<string, unknown>, secretKey: string): string {
+export function generateSignature(
+  data: Record<string, unknown>,
+  secretKey: string,
+): string {
   try {
     const payload = encodeData(data);
-    const signature = crypto.createHmac(ALGORITHM, secretKey).update(payload).digest('hex');
+    const signature = crypto
+      .createHmac(ALGORITHM, secretKey)
+      .update(payload)
+      .digest('hex');
     return signature;
   } catch (error) {
     logger.error(`Error generating signature: ${error}`);
@@ -171,7 +177,10 @@ export function generatePaymentSignature(
  * @param signature - Signature générée
  * @returns En-tête d\'autorisation formaté
  */
-export function createAuthorizationHeader(publicKey: string, signature: string): string {
+export function createAuthorizationHeader(
+  publicKey: string,
+  signature: string,
+): string {
   return `Bearer ${publicKey}:${signature}`;
 }
 
@@ -208,9 +217,14 @@ export function parseAuthorizationHeader(
  * @param salt - Salt optionnel
  * @returns Hash avec salt
  */
-export function hashWithSalt(secret: string, salt?: string): { hash: string; salt: string } {
+export function hashWithSalt(
+  secret: string,
+  salt?: string,
+): { hash: string; salt: string } {
   const usedSalt = salt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(secret, usedSalt, 1000, 64, 'sha512').toString('hex');
+  const hash = crypto
+    .pbkdf2Sync(secret, usedSalt, 1000, 64, 'sha512')
+    .toString('hex');
   return { hash, salt: usedSalt };
 }
 
@@ -221,7 +235,11 @@ export function hashWithSalt(secret: string, salt?: string): { hash: string; sal
  * @param salt - Salt utilisé
  * @returns true si le secret correspond
  */
-export function verifyHashedSecret(secret: string, hash: string, salt: string): boolean {
+export function verifyHashedSecret(
+  secret: string,
+  hash: string,
+  salt: string,
+): boolean {
   const { hash: computedHash } = hashWithSalt(secret, salt);
   return computedHash === hash;
 }
@@ -252,4 +270,3 @@ export function extractOrderIdFromTrackingId(trackingId: string): string {
   // On prend tout sauf les 2 dernières parties (timestamp et random)
   return parts.slice(0, -2).join('-');
 }
-

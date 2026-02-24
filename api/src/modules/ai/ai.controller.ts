@@ -1,23 +1,8 @@
-/**
- * Controller AI RAG
- * @description Expose les endpoints REST pour les fonctionnalités AI
- */
-
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
-  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -33,7 +18,6 @@ import {
   AddKnowledgeDocumentDto,
   IndexProductDto,
   CreateChatSessionDto,
-  ProductSimilaritySearchDto,
 } from './dto/ai-query.dto';
 import {
   EmbeddingResponseDto,
@@ -65,8 +49,8 @@ export class AiController {
    */
   @Post('embeddings')
   @ApiOperation({
-    summary: "Générer un embedding vectoriel",
-    description: "Encode un texte en vecteur sémantique avec OpenAI",
+    summary: 'Générer un embedding vectoriel',
+    description: 'Encode un texte en vecteur sémantique avec OpenAI',
   })
   @ApiBody({ type: GenerateEmbeddingDto })
   @ApiResponse({
@@ -90,7 +74,8 @@ export class AiController {
   @Post('search')
   @ApiOperation({
     summary: 'Recherche sémantique',
-    description: 'Recherche dans la base de connaissances par similarité cosinus',
+    description:
+      'Recherche dans la base de connaissances par similarité cosinus',
   })
   @ApiBody({ type: SemanticSearchDto })
   @ApiResponse({
@@ -120,9 +105,7 @@ export class AiController {
     description: 'Réponse du chatbot',
     type: ChatbotResponseDto,
   })
-  async chatbot(
-    @Body() dto: ChatbotQueryDto,
-  ): Promise<ChatbotResponseDto> {
+  async chatbot(@Body() dto: ChatbotQueryDto): Promise<ChatbotResponseDto> {
     return this.aiService.chatbot(dto);
   }
 
@@ -381,11 +364,10 @@ export class AiController {
     status: 200,
     description: 'Service opérationnel',
   })
-  async healthCheck(): Promise<{ status: string; openaiConfigured: boolean }> {
-    return {
+  healthCheck(): Promise<{ status: string; openaiConfigured: boolean }> {
+    return Promise.resolve({
       status: 'ok',
       openaiConfigured: true,
-    };
+    });
   }
 }
-

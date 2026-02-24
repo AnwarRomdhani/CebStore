@@ -8,6 +8,7 @@ import {
   Get,
   Post,
   Body,
+  Param,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -225,5 +226,80 @@ export class WorkflowsController {
   getEventTypes(): string[] {
     return Object.values(WorkflowEventType);
   }
-}
 
+  // ==================== ADMIN : SURVEILLANCE ====================
+
+  /**
+   * [ADMIN] Historique des exécutions de workflows
+   */
+  @Get('admin/history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Historique des workflows',
+    description: 'Liste des dernières exécutions de workflows',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Historique des exécutions',
+  })
+  async getWorkflowHistory() {
+    return this.workflowsService.getWorkflowHistory();
+  }
+
+  /**
+   * [ADMIN] Statistiques des workflows
+   */
+  @Get('admin/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Statistiques des workflows',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistiques',
+  })
+  async getWorkflowStats() {
+    return this.workflowsService.getWorkflowStats();
+  }
+
+  /**
+   * [ADMIN] Configuration des webhooks n8n
+   */
+  @Get('admin/webhooks')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Configuration des webhooks',
+    description: 'Liste des webhooks n8n configurés',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhooks configurés',
+  })
+  async getWebhooksConfig() {
+    return this.workflowsService.getWebhooksConfig();
+  }
+
+  /**
+   * [ADMIN] Tester un webhook
+   */
+  @Post('admin/webhooks/:name/test')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Tester un webhook',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Test réussi',
+  })
+  async testWebhook(@Param('name') name: string) {
+    return this.workflowsService.testWebhook(name);
+  }
+}

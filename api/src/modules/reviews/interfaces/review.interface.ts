@@ -4,7 +4,8 @@
  */
 
 import { Prisma } from '@prisma/client';
-type Review = Prisma.ReviewGetPayload<{}>
+
+type Review = Prisma.ReviewGetPayload<Record<string, never>>;
 
 /**
  * Interface pour un avis avec les relations
@@ -76,4 +77,3 @@ export interface PurchaseVerification {
   orderId?: string;
   orderDate?: Date;
 }
-

@@ -167,7 +167,7 @@ export class CancelPaymentDto {
   developerTrackingId: string;
 
   @ApiPropertyOptional({
-    description: 'Raison de l\'annulation',
+    description: "Raison de l'annulation",
     example: 'Client a annulé',
   })
   @IsOptional()
@@ -213,4 +213,3 @@ export class TestWalletPaymentDto {
   @IsString()
   paymentReason?: string;
 }
-

@@ -98,7 +98,7 @@ export class UpdateDeliveryStatusDto {
  */
 export class TrackingHistoryDto {
   @ApiProperty({
-    description: 'ID de l\'historique',
+    description: "ID de l'historique",
     example: 'tracking-history-uuid',
   })
   id: string;
@@ -122,7 +122,7 @@ export class TrackingHistoryDto {
   location?: string;
 
   @ApiProperty({
-    description: 'Date de l\'événement',
+    description: "Date de l'événement",
     example: '2024-01-10T14:30:00Z',
   })
   timestamp: Date;
@@ -175,7 +175,7 @@ export class DeliveryTrackingResponseDto {
   trackingUrl?: string;
 
   @ApiProperty({
-    description: 'Date d\'expédition',
+    description: "Date d'expédition",
     example: '2024-01-10T09:00:00Z',
   })
   shippedAt?: string;
@@ -270,7 +270,13 @@ export class DeliveryNotificationDto {
 
   @ApiProperty({
     description: 'Type de notification',
-    enum: ['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED', 'DELIVERY_FAILED'],
+    enum: [
+      'SHIPPED',
+      'IN_TRANSIT',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'DELIVERY_FAILED',
+    ],
     example: 'SHIPPED',
   })
   @IsString()
@@ -287,4 +293,3 @@ export class DeliveryNotificationDto {
   })
   metadata?: Record<string, unknown>;
 }
-

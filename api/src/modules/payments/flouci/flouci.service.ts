@@ -14,16 +14,15 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { tndToMillimes, millimesToTnd } from 'src/utils/tunisian.utils';
 import {
   FlouciPaymentPayload,
   FlouciPaymentResponse,
   FlouciTransactionStatusResponse,
   FlouciWebhookData,
-  FlouciTransactionStatus,
   FlouciErrorCode,
   FlouciException,
-  PaymentInitiationResult,
 } from './flouci.types';
 import {
   InitiatePaymentDto,
@@ -44,7 +43,8 @@ import {
   verifyFlouciWebhookSignature,
 } from './utils/flouci-signature.util';
 import { OrdersService } from 'src/modules/orders/orders.service';
-import { Prisma } from '@prisma/client';
+import { UpdateOrderDto } from 'src/modules/orders/dto/update-order.dto';
+import { OrderStatus } from '@prisma/client';
 import { HttpException } from '@nestjs/common';
 
 @Injectable()
@@ -68,12 +68,16 @@ export class FlouciService {
   ) {
     this.publicKey = this.configService.get<string>('FLOUCI_APP_PUBLIC') || '';
     this.privateKey = this.configService.get<string>('FLOUCI_APP_SECRET') || '';
-    this.successUrl = this.configService.get<string>('FLOUCI_SUCCESS_URL') || '';
+    this.successUrl =
+      this.configService.get<string>('FLOUCI_SUCCESS_URL') || '';
     this.failUrl = this.configService.get<string>('FLOUCI_FAIL_URL') || '';
-    this.webhookUrl = this.configService.get<string>('FLOUCI_WEBHOOK_URL') || '';
-    this.webhookSecret = this.configService.get<string>('FLOUCI_WEBHOOK_SECRET') || '';
+    this.webhookUrl =
+      this.configService.get<string>('FLOUCI_WEBHOOK_URL') || '';
+    this.webhookSecret =
+      this.configService.get<string>('FLOUCI_WEBHOOK_SECRET') || '';
     this.sandbox = this.configService.get<string>('FLOUCI_SANDBOX') === 'true';
-    this.n8nWebhookUrl = this.configService.get<string>('N8N_PAYMENT_WEBHOOK') || '';
+    this.n8nWebhookUrl =
+      this.configService.get<string>('N8N_PAYMENT_WEBHOOK') || '';
 
     if (!this.publicKey || !this.privateKey) {
       this.logger.warn('Flouci API keys not configured');
@@ -83,7 +87,9 @@ export class FlouciService {
   /**
    * Initier un nouveau paiement
    */
-  async initiatePayment(dto: InitiatePaymentDto): Promise<PaymentInitiationResponseDto> {
+  async initiatePayment(
+    dto: InitiatePaymentDto,
+  ): Promise<PaymentInitiationResponseDto> {
     try {
       // Vérifier que la commande existe
       const order = await this.prisma.order.findUnique({
@@ -109,7 +115,8 @@ export class FlouciService {
       // Préparer le payload
       const payload: FlouciPaymentPayload = {
         amount: amountMillimes,
-        success_link: dto.returnUrl || `${this.successUrl}?orderId=${dto.orderId}`,
+        success_link:
+          dto.returnUrl || `${this.successUrl}?orderId=${dto.orderId}`,
         fail_link: `${this.failUrl}?orderId=${dto.orderId}`,
         webhook: this.webhookUrl,
         developer_tracking_id: trackingId,
@@ -164,7 +171,9 @@ export class FlouciService {
 
       // Logger en mode sandbox
       if (this.sandbox) {
-        this.logger.log(`Sandbox mode: Payment ${response.data.result.payment_id} initiated`);
+        this.logger.log(
+          `Sandbox mode: Payment ${response.data.result.payment_id} initiated`,
+        );
       }
 
       // Calculer la date d'expiration (30 minutes)
@@ -185,14 +194,18 @@ export class FlouciService {
         throw error;
       }
       this.logger.error(`Error initiating payment: ${error}`);
-      throw new InternalServerErrorException('Erreur lors de l\'initiation du paiement');
+      throw new InternalServerErrorException(
+        "Erreur lors de l'initiation du paiement",
+      );
     }
   }
 
   /**
    * Vérifier le statut d\'un paiement
    */
-  async verifyPayment(dto: VerifyPaymentDto): Promise<PaymentVerificationResponseDto> {
+  async verifyPayment(
+    dto: VerifyPaymentDto,
+  ): Promise<PaymentVerificationResponseDto> {
     try {
       // Récupérer le paiement depuis la base de données
       const payment = await this.prisma.payment.findFirst({
@@ -223,7 +236,10 @@ export class FlouciService {
       }
 
       // Appeler l'API Flouci pour vérifier le statut
-      const authHeader = createAuthorizationHeader(this.publicKey, this.privateKey);
+      const authHeader = createAuthorizationHeader(
+        this.publicKey,
+        this.privateKey,
+      );
 
       const response = await firstValueFrom(
         this.httpService.get<FlouciTransactionStatusResponse>(
@@ -268,14 +284,19 @@ export class FlouciService {
         throw error;
       }
       this.logger.error(`Error verifying payment: ${error}`);
-      throw new InternalServerErrorException('Erreur lors de la vérification du paiement');
+      throw new InternalServerErrorException(
+        'Erreur lors de la vérification du paiement',
+      );
     }
   }
 
   /**
    * Traiter le webhook Flouci
    */
-  async handleWebhook(webhookDto: FlouciWebhookData, signature?: string): Promise<WebhookResponseDto> {
+  async handleWebhook(
+    webhookDto: FlouciWebhookData,
+    signature?: string,
+  ): Promise<WebhookResponseDto> {
     try {
       // Vérifier la signature du webhook
       if (this.webhookSecret && signature) {
@@ -286,13 +307,17 @@ export class FlouciService {
         );
 
         if (!verification.valid) {
-          this.logger.warn(`Webhook signature verification failed: ${verification.error}`);
+          this.logger.warn(
+            `Webhook signature verification failed: ${verification.error}`,
+          );
           // En production, on pourrait rejeter les webhooks non signés
         }
       }
 
       // Extraire l'ID de commande du tracking ID
-      const orderId = extractOrderIdFromTrackingId(webhookDto.developer_tracking_id);
+      const orderId = extractOrderIdFromTrackingId(
+        webhookDto.developer_tracking_id,
+      );
 
       // Récupérer le paiement
       const payment = await this.prisma.payment.findFirst({
@@ -332,7 +357,14 @@ export class FlouciService {
       if (newStatus === 'COMPLETED') {
         await this.handleSuccessfulPayment(payment);
       } else if (newStatus === 'FAILED') {
-        await this.handleFailedPayment(payment, webhookDto);
+        this.handleFailedPayment(
+          {
+            id: payment.id,
+            orderId: payment.orderId,
+            amount: Number(payment.amount),
+          },
+          webhookDto,
+        );
       }
 
       // Déclencher le webhook n8n
@@ -346,14 +378,18 @@ export class FlouciService {
       };
     } catch (error) {
       this.logger.error(`Error processing webhook: ${error}`);
-      throw new InternalServerErrorException('Erreur lors du traitement du webhook');
+      throw new InternalServerErrorException(
+        'Erreur lors du traitement du webhook',
+      );
     }
   }
 
   /**
    * Effectuer un paiement de test avec wallet simulé
    */
-  async simulateTestPayment(dto: TestWalletPaymentDto): Promise<PaymentInitiationResponseDto> {
+  async simulateTestPayment(
+    dto: TestWalletPaymentDto,
+  ): Promise<PaymentInitiationResponseDto> {
     if (!this.sandbox) {
       throw new BadRequestException('Le mode sandbox nest pas activé');
     }
@@ -372,7 +408,7 @@ export class FlouciService {
 
     await this.prisma.payment.create({
       data: {
-        amount: dto.amount,
+        amount: new Prisma.Decimal(dto.amount),
         status: 'PENDING',
         currency: 'TND',
         transactionId: `test-${trackingId}`,
@@ -382,26 +418,51 @@ export class FlouciService {
     });
 
     // Simuler un paiement réussi ( wallet 111111)
-    const isSuccess = dto.testWalletNumber === '111111' || !dto.testWalletNumber;
+    const isSuccess =
+      dto.testWalletNumber === '111111' || !dto.testWalletNumber;
 
     // Simuler le délai de traitement
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Traiter le paiement
     if (isSuccess) {
-      await this.prisma.payment.update({
+      const payment = await this.prisma.payment.findFirst({
         where: { transactionId: `test-${trackingId}` },
-        data: { status: 'COMPLETED' },
       });
 
-      await this.handleSuccessfulPayment(await this.prisma.payment.findFirst({
-        where: { transactionId: `test-${trackingId}` },
-      }));
+      if (payment) {
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: 'COMPLETED' },
+        });
+
+        await this.handleSuccessfulPayment({
+          id: payment.id,
+          orderId: payment.orderId,
+          amount: payment.amount,
+          userId: payment.userId,
+        });
+      }
     } else {
-      await this.prisma.payment.update({
+      const payment = await this.prisma.payment.findFirst({
         where: { transactionId: `test-${trackingId}` },
-        data: { status: 'FAILED' },
       });
+
+      if (payment) {
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: 'FAILED' },
+        });
+
+        this.handleFailedPayment(
+          {
+            id: payment.id,
+            orderId: payment.orderId,
+            amount: Number(payment.amount),
+          },
+          { status: 'FAILED' },
+        );
+      }
     }
 
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
@@ -442,7 +503,10 @@ export class FlouciService {
       paymentReason: `Commande ${payment.orderId}`,
       createdAt: payment.createdAt.toISOString(),
       updatedAt: payment.updatedAt.toISOString(),
-      paidAt: payment.status === 'COMPLETED' ? payment.updatedAt.toISOString() : undefined,
+      paidAt:
+        payment.status === 'COMPLETED'
+          ? payment.updatedAt.toISOString()
+          : undefined,
     };
   }
 
@@ -459,7 +523,9 @@ export class FlouciService {
     }
 
     if (payment.status !== 'PENDING') {
-      throw new BadRequestException('Seuls les paiements en attente peuvent être annulés');
+      throw new BadRequestException(
+        'Seuls les paiements en attente peuvent être annulés',
+      );
     }
 
     await this.prisma.payment.update({
@@ -473,7 +539,9 @@ export class FlouciService {
   /**
    * Mapper le statut Flouci vers notre enum
    */
-  private mapFlouciStatus(flouciStatus: string): 'PENDING' | 'COMPLETED' | 'FAILED' {
+  private mapFlouciStatus(
+    flouciStatus: string,
+  ): 'PENDING' | 'COMPLETED' | 'FAILED' {
     switch (flouciStatus) {
       case 'SUCCESS':
         return 'COMPLETED';
@@ -512,14 +580,13 @@ export class FlouciService {
   }): Promise<void> {
     try {
       // Mettre à jour le statut de la commande
-      await this.ordersService.update(
-        payment.orderId,
-        { status: 'PROCESSING' } as any,
-        undefined,
-      );
+      const updateDto: UpdateOrderDto = { status: OrderStatus.PROCESSING };
+      await this.ordersService.update(payment.orderId, updateDto, undefined);
 
       // Logger le succès
-      this.logger.log(`Payment ${payment.id} completed for order ${payment.orderId}`);
+      this.logger.log(
+        `Payment ${payment.id} completed for order ${payment.orderId}`,
+      );
     } catch (error) {
       this.logger.error(`Error handling successful payment: ${error}`);
     }
@@ -528,10 +595,10 @@ export class FlouciService {
   /**
    * Gérer un paiement échoué
    */
-  private async handleFailedPayment(
-    payment: { id: string; orderId: string; amount: Prisma.Decimal },
-    webhookDto: FlouciWebhookData,
-  ): Promise<void> {
+  private handleFailedPayment(
+    payment: { id: string; orderId: string; amount: number },
+    webhookDto: { status: string },
+  ): void {
     this.logger.warn(`Payment ${payment.id} failed: ${webhookDto.status}`);
   }
 
@@ -541,7 +608,7 @@ export class FlouciService {
   private async triggerN8nWebhook(
     orderId: string,
     status: string,
-    webhookDto: FlouciWebhookDto,
+    webhookDto: FlouciWebhookData,
   ): Promise<void> {
     if (!this.n8nWebhookUrl) {
       return;
@@ -561,5 +628,200 @@ export class FlouciService {
       this.logger.error(`Error triggering n8n webhook: ${error}`);
     }
   }
-}
 
+  // ==================== ADMIN : GESTION ====================
+
+  /**
+   * [ADMIN] Liste des paiements
+   */
+  async getPayments(page: number, limit: number, status?: string) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        skip,
+        take: limit,
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return {
+      data: payments.map((p) => ({
+        id: p.id,
+        amount: Number(p.amount),
+        status: p.status,
+        currency: p.currency,
+        transactionId: p.transactionId,
+        paymentMethod: p.paymentMethod,
+        orderNumber: p.order.orderNumber,
+        customerEmail: p.user.email,
+        customerName: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
+        createdAt: p.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * [ADMIN] Détail d'un paiement
+   */
+  async getPaymentDetail(id: string) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        order: {
+          include: {
+            orderItems: {
+              include: {
+                product: {
+                  select: {
+                    name: true,
+                    imageUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Paiement non trouvé');
+    }
+
+    return {
+      ...payment,
+      amount: Number(payment.amount),
+    };
+  }
+
+  /**
+   * [ADMIN] Rembourser un paiement
+   */
+  async refundPayment(id: string, amount?: number, reason?: string) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+      include: { order: true },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Paiement non trouvé');
+    }
+
+    if (payment.status !== 'COMPLETED') {
+      throw new BadRequestException('Seuls les paiements complétés peuvent être remboursés');
+    }
+
+    // Créer un paiement de remboursement (status REFUNDED)
+    const refund = await this.prisma.payment.create({
+      data: {
+        amount: amount ? new Prisma.Decimal(amount) : payment.amount,
+        status: 'REFUNDED',
+        currency: payment.currency,
+        userId: payment.userId,
+        orderId: payment.orderId,
+        paymentMethod: `refund_${payment.paymentMethod || 'flouci'}`,
+        transactionId: `refund_${payment.transactionId || id}`,
+      },
+    });
+
+    // Mettre à jour la commande
+    await this.prisma.order.update({
+      where: { id: payment.orderId },
+      data: { status: 'CANCELLED' },
+    });
+
+    return {
+      success: true,
+      message: 'Remboursement effectué',
+      refund: {
+        id: refund.id,
+        amount: Number(refund.amount),
+        createdAt: refund.createdAt,
+      },
+    };
+  }
+
+  /**
+   * [ADMIN] Configuration Flouci
+   */
+  async getConfig() {
+    return {
+      publicKey: this.publicKey ? `${this.publicKey.substring(0, 8)}...` : 'non configuré',
+      privateKey: this.privateKey ? '***' : 'non configuré',
+      baseUrl: this.baseUrl,
+      sandbox: this.sandbox,
+      webhookConfigured: !!this.n8nWebhookUrl,
+    };
+  }
+
+  /**
+   * [ADMIN] Tendance des paiements
+   */
+  async getPaymentTrends(period: 'day' | 'week' | 'month') {
+    const now = new Date();
+    const startDate = new Date();
+
+    if (period === 'day') {
+      startDate.setDate(now.getDate() - 30);
+    } else if (period === 'week') {
+      startDate.setDate(now.getDate() - 90);
+    } else {
+      startDate.setMonth(now.getMonth() - 6);
+    }
+
+    const trends = await this.prisma.payment.groupBy({
+      by: ['status'],
+      where: {
+        createdAt: { gte: startDate },
+      },
+      _count: { id: true },
+      _sum: { amount: true },
+    });
+
+    return {
+      period,
+      startDate,
+      endDate: now,
+      trends: trends.map((t) => ({
+        status: t.status,
+        count: t._count.id,
+        totalAmount: Number(t._sum.amount) || 0,
+      })),
+    };
+  }
+}

@@ -9,6 +9,7 @@ import {
   Get,
   Body,
   Param,
+  Query,
   Headers,
   HttpCode,
   HttpStatus,
@@ -29,7 +30,7 @@ import {
   VerifyPaymentDto,
   TestWalletPaymentDto,
 } from './dto/initiate-payment.dto';
-import { FlouciWebhookData } from './flouci.types';
+import type { FlouciWebhookData } from './flouci.types';
 import {
   PaymentInitiationResponseDto,
   PaymentVerificationResponseDto,
@@ -92,7 +93,7 @@ export class FlouciController {
     summary: 'Webhook Flouci',
     description: 'Endpoint pour recevoir les notifications de paiement',
   })
-  @ApiBody({ type: FlouciWebhookDto })
+  @ApiBody({ type: Object }) // Using Object as FlouciWebhookData is a type alias
   @ApiResponse({
     status: 200,
     description: 'Webhook traité',
@@ -112,7 +113,7 @@ export class FlouciController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Vérifier le statut d\'un paiement',
+    summary: "Vérifier le statut d'un paiement",
   })
   @ApiBody({ type: VerifyPaymentDto })
   @ApiResponse({
@@ -133,7 +134,7 @@ export class FlouciController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Obtenir le statut d\'un paiement',
+    summary: "Obtenir le statut d'un paiement",
   })
   @ApiParam({
     name: 'orderId',
@@ -219,14 +220,14 @@ export class FlouciController {
     description: 'Configuration du mode test',
     type: TestModeConfigResponseDto,
   })
-  async getTestConfig(): Promise<TestModeConfigResponseDto> {
-    return {
+  getTestConfig(): Promise<TestModeConfigResponseDto> {
+    return Promise.resolve({
       sandboxEnabled: true,
       successWallet: '111111',
       failureWallet: '000000',
       instructions:
         'Utilisez le numéro de wallet 111111 pour simuler un paiement réussi, ou 000000 pour simuler un échec.',
-    };
+    });
   }
 
   // ==================== ENDPOINTS ADMIN ====================
@@ -254,9 +255,15 @@ export class FlouciController {
   }> {
     const [total, completed, failed, pending, revenue] = await Promise.all([
       this.flouciService['prisma'].payment.count(),
-      this.flouciService['prisma'].payment.count({ where: { status: 'COMPLETED' } }),
-      this.flouciService['prisma'].payment.count({ where: { status: 'FAILED' } }),
-      this.flouciService['prisma'].payment.count({ where: { status: 'PENDING' } }),
+      this.flouciService['prisma'].payment.count({
+        where: { status: 'COMPLETED' },
+      }),
+      this.flouciService['prisma'].payment.count({
+        where: { status: 'FAILED' },
+      }),
+      this.flouciService['prisma'].payment.count({
+        where: { status: 'PENDING' },
+      }),
       this.flouciService['prisma'].payment.aggregate({
         where: { status: 'COMPLETED' },
         _sum: { amount: true },
@@ -271,5 +278,108 @@ export class FlouciController {
       totalRevenue: Number(revenue._sum.amount) || 0,
     };
   }
-}
 
+  /**
+   * [ADMIN] Liste des paiements
+   */
+  @Get('admin/payments')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Liste des paiements',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des paiements',
+  })
+  async getPayments(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+  ) {
+    return this.flouciService.getPayments(
+      Number(page) || 1,
+      Number(limit) || 20,
+      status,
+    );
+  }
+
+  /**
+   * [ADMIN] Détail d'un paiement
+   */
+  @Get('admin/payments/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Détail d\'un paiement',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Détail du paiement',
+  })
+  async getPaymentDetail(@Param('id') id: string) {
+    return this.flouciService.getPaymentDetail(id);
+  }
+
+  /**
+   * [ADMIN] Rembourser un paiement
+   */
+  @Post('admin/payments/:id/refund')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Rembourser un paiement',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Remboursement effectué',
+  })
+  async refundPayment(
+    @Param('id') id: string,
+    @Body('amount') amount?: number,
+    @Body('reason') reason?: string,
+  ) {
+    return this.flouciService.refundPayment(id, amount, reason);
+  }
+
+  /**
+   * [ADMIN] Configuration Flouci
+   */
+  @Get('admin/config')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Configuration Flouci',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Configuration actuelle',
+  })
+  async getConfig() {
+    return this.flouciService.getConfig();
+  }
+
+  /**
+   * [ADMIN] Tendance des paiements
+   */
+  @Get('admin/trends')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Tendance des paiements',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tendance',
+  })
+  async getPaymentTrends(
+    @Query('period') period: 'day' | 'week' | 'month' = 'month',
+  ) {
+    return this.flouciService.getPaymentTrends(period);
+  }
+}

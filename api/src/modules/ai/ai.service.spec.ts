@@ -1,16 +1,11 @@
-/**
- * Tests unitaires pour AiService
- * @description Tests pour la génération dembeddings et la recherche vectorielle
- */
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { of } from 'rxjs';
 import { AiService } from './ai.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EmbeddingUtils } from './utils/embedding.utils';
+import * as EmbeddingUtils from './utils/embedding.utils';
+import { DocumentType } from './dto/ai-query.dto';
+import { SEOGenerationDto } from './dto/ai-query.dto';
 
 // Mock OpenAI
 jest.mock('openai', () => {
@@ -119,7 +114,7 @@ describe('AiService', () => {
     const dto = {
       text: 'Chaussures pour homme',
       documentId: 'doc-123',
-      documentType: 'PRODUCT',
+      documentType: DocumentType.PRODUCT,
     };
 
     it('devrait générer un embedding avec succès', async () => {
@@ -262,20 +257,21 @@ describe('AiService', () => {
       const result = await service.indexProduct(dto);
 
       expect(result).toBeDefined();
-      expect(result.productId).toBe(dto.productId);
+      expect(result.id).toBe(dto.productId);
       expect(result.embeddingGenerated).toBe(true);
     });
   });
 
   describe('generateSEO', () => {
-    const dto = {
+    const dto: SEOGenerationDto = {
       title: 'Chaussures de running Nike',
-      description: 'Chaussures de running légères et résistantes pour les athlètes',
+      description:
+        'Chaussures de running légères et résistantes pour les athlètes',
       keywords: ['chaussures', 'running', 'nike', 'sport'],
       brand: 'Nike',
       category: 'Chaussures de sport',
-      targetLength: 'medium',
-      tone: 'professional',
+      targetLength: 'medium' as const,
+      tone: 'professional' as const,
     };
 
     it('devrait générer une optimisation SEO', async () => {
@@ -367,4 +363,3 @@ describe('EmbeddingUtils', () => {
     });
   });
 });
-

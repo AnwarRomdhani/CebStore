@@ -1,8 +1,3 @@
-/**
- * Configuration OpenAI
- * @description Gère les variables d'environnement pour l'API OpenAI
- */
-
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('openai', () => ({
@@ -16,7 +11,8 @@ export default registerAs('openai', () => ({
    * Modèle d'embedding par défaut
    * @default text-embedding-ada-002
    */
-  embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-ada-002',
+  embeddingModel:
+    process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-ada-002',
 
   /**
    * Modèle de chat par défaut
@@ -41,4 +37,3 @@ export default registerAs('openai', () => ({
    */
   organization: process.env.OPENAI_ORG_ID || undefined,
 }));
-

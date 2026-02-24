@@ -156,7 +156,7 @@ export class AdvancedQueryProductDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Nombre d\'éléments par page',
+    description: "Nombre d'éléments par page",
     example: 20,
   })
   @IsOptional()
@@ -296,4 +296,3 @@ export class BatchIndexProductsDto {
   @Transform(({ value }) => value === 'true' || value === true)
   regenerate?: boolean;
 }
-

@@ -7,7 +7,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReviewResponseDto {
   @ApiProperty({
-    description: 'ID unique de l\'avis',
+    description: "ID unique de l'avis",
     example: 'uuid-avis',
   })
   id: string;
@@ -19,7 +19,7 @@ export class ReviewResponseDto {
   rating: number;
 
   @ApiPropertyOptional({
-    description: 'Commentaire de l\'avis',
+    description: "Commentaire de l'avis",
     example: 'Excellent produit !',
   })
   comment?: string;
@@ -31,25 +31,25 @@ export class ReviewResponseDto {
   productId: string;
 
   @ApiProperty({
-    description: 'ID de l\'utilisateur qui a rédigé l\'avis',
+    description: "ID de l'utilisateur qui a rédigé l'avis",
     example: 'uuid-utilisateur',
   })
   userId: string;
 
   @ApiPropertyOptional({
-    description: 'Prénom de l\'utilisateur',
+    description: "Prénom de l'utilisateur",
     example: 'Mohamed',
   })
   userFirstName?: string;
 
   @ApiPropertyOptional({
-    description: 'Nom de l\'utilisateur',
+    description: "Nom de l'utilisateur",
     example: 'Ben Ali',
   })
   userLastName?: string;
 
   @ApiProperty({
-    description: 'Date de création de l\'avis',
+    description: "Date de création de l'avis",
     example: '2024-01-15T10:30:00.000Z',
   })
   createdAt: Date;
@@ -78,7 +78,7 @@ export class ProductRatingSummaryDto {
   averageRating: number;
 
   @ApiProperty({
-    description: 'Nombre total d\'avis',
+    description: "Nombre total d'avis",
     example: 42,
   })
   totalReviews: number;
@@ -134,4 +134,3 @@ export class PaginatedReviewsResponseDto {
   })
   ratingSummary?: ProductRatingSummaryDto;
 }
-

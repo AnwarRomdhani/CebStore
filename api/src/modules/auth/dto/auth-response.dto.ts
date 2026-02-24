@@ -1,5 +1,3 @@
-// DTO for auth response
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 

@@ -35,6 +35,9 @@ import {
   PaginatedReviewsResponseDto,
 } from './dto/review-response.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { User } from '@prisma/client';
 
@@ -350,5 +353,120 @@ export class ReviewsController {
       hasReviewed,
       message,
     };
+  }
+
+  // ==================== ADMIN : MODÉRATION ====================
+
+  /**
+   * [ADMIN] Liste tous les avis avec modération
+   */
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Liste tous les avis (modération)',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['all', 'pending', 'approved', 'hidden'],
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste de tous les avis',
+    type: PaginatedReviewsResponseDto,
+  })
+  async findAllForAdmin(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('status') status?: string,
+  ) {
+    return await this.reviewsService.findAllForAdmin(
+      page || 1,
+      limit || 20,
+      status,
+    );
+  }
+
+  /**
+   * [ADMIN] Masquer un avis
+   */
+  @Patch('admin/:id/hide')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Masquer un avis',
+  })
+  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiResponse({
+    status: 200,
+    description: 'Avis masqué',
+    type: ReviewResponseDto,
+  })
+  async hideReview(@Param('id') id: string) {
+    return await this.reviewsService.hideReview(id);
+  }
+
+  /**
+   * [ADMIN] Approuver un avis
+   */
+  @Patch('admin/:id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Approuver un avis',
+  })
+  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiResponse({
+    status: 200,
+    description: 'Avis approuvé',
+    type: ReviewResponseDto,
+  })
+  async approveReview(@Param('id') id: string) {
+    return await this.reviewsService.approveReview(id);
+  }
+
+  /**
+   * [ADMIN] Supprimer définitivement un avis
+   */
+  @Delete('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '[ADMIN] Supprimer définitivement un avis',
+  })
+  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiResponse({
+    status: 200,
+    description: 'Avis supprimé',
+  })
+  async deleteReviewAdmin(@Param('id') id: string) {
+    await this.reviewsService.deleteReviewAdmin(id);
+    return { message: 'Avis supprimé définitivement' };
+  }
+
+  /**
+   * [ADMIN] Statistiques des avis
+   */
+  @Get('admin/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Statistiques des avis',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistiques des avis',
+  })
+  async getStats() {
+    return await this.reviewsService.getStats();
   }
 }

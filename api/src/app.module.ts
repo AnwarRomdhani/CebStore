@@ -16,6 +16,14 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { DiscountsModule } from './modules/discounts/discounts.module';
 import { AiModule } from './modules/ai/ai.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { GdprModule } from './modules/gdpr/gdpr.module';
+import { CacheModule } from './modules/cache/cache.module';
+import { ImagesModule } from './modules/images/images.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { SearchHistoryModule } from './modules/search-history/search-history.module';
+import { ChatFeedbackModule } from './modules/chat-feedback/chat-feedback.module';
 
 @Module({
   imports: [
@@ -41,6 +49,14 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     DiscountsModule,
     AiModule,
     WorkflowsModule,
+    AnalyticsModule,
+    AdminModule,
+    GdprModule,
+    CacheModule,
+    ImagesModule,
+    WishlistModule,
+    SearchHistoryModule,
+    ChatFeedbackModule,
   ],
   controllers: [AppController],
   providers: [

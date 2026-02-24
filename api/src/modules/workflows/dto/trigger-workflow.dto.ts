@@ -126,4 +126,3 @@ export class WorkflowHealthDto {
   })
   webhooks!: Record<string, boolean>;
 }
-

@@ -1,16 +1,8 @@
-/**
- * DTO pour les embeddings
- * @description Data Transfer Objects pour les opérations d\'embedding
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Embedding vectoriel
- */
 export class EmbeddingDto {
   @ApiProperty({
-    description: 'Vecteur d\'embedding',
+    description: "Vecteur d'embedding",
     type: [Number],
     example: [0.1, 0.2, 0.3, 0.4],
   })
@@ -28,10 +20,6 @@ export class EmbeddingDto {
   })
   model: string;
 }
-
-/**
- * Embedding encodé pour stockage
- */
 export class EncodedEmbeddingDto {
   @ApiProperty({
     description: 'Embedding encodé en base64',
@@ -51,10 +39,6 @@ export class EncodedEmbeddingDto {
   })
   model: string;
 }
-
-/**
- * Embedding avec métadonnées
- */
 export class EmbeddingWithMetadataDto extends EmbeddingDto {
   @ApiProperty({
     description: 'ID du document source',
@@ -64,7 +48,14 @@ export class EmbeddingWithMetadataDto extends EmbeddingDto {
 
   @ApiProperty({
     description: 'Type de document',
-    enum: { PRODUCT: 'PRODUCT', CATEGORY: 'CATEGORY', FAQ: 'FAQ', POLICY: 'POLICY', REVIEW: 'REVIEW', GENERAL: 'GENERAL' },
+    enum: {
+      PRODUCT: 'PRODUCT',
+      CATEGORY: 'CATEGORY',
+      FAQ: 'FAQ',
+      POLICY: 'POLICY',
+      REVIEW: 'REVIEW',
+      GENERAL: 'GENERAL',
+    },
     example: 'PRODUCT',
   })
   documentType: string;
@@ -75,10 +66,6 @@ export class EmbeddingWithMetadataDto extends EmbeddingDto {
   })
   metadata?: Record<string, unknown>;
 }
-
-/**
- * Similarité entre deux embeddings
- */
 export class EmbeddingSimilarityDto {
   @ApiProperty({
     description: 'ID du premier embedding',
@@ -98,10 +85,6 @@ export class EmbeddingSimilarityDto {
   })
   similarity: number;
 }
-
-/**
- * Batch d\'embeddings à générer
- */
 export class BatchEmbeddingRequestDto {
   @ApiProperty({
     description: 'Liste des textes à encoder',
@@ -118,18 +101,21 @@ export class BatchEmbeddingRequestDto {
 
   @ApiPropertyOptional({
     description: 'Type de document pour tous les éléments',
-    enum: { PRODUCT: 'PRODUCT', CATEGORY: 'CATEGORY', FAQ: 'FAQ', POLICY: 'POLICY', REVIEW: 'REVIEW', GENERAL: 'GENERAL' },
+    enum: {
+      PRODUCT: 'PRODUCT',
+      CATEGORY: 'CATEGORY',
+      FAQ: 'FAQ',
+      POLICY: 'POLICY',
+      REVIEW: 'REVIEW',
+      GENERAL: 'GENERAL',
+    },
     example: 'PRODUCT',
   })
   documentType?: string;
 }
-
-/**
- * Résultat d\'un embedding en lot
- */
 export class BatchEmbeddingResultDto {
   @ApiProperty({
-    description: 'Index de l\'élément dans la requête',
+    description: "Index de l'élément dans la requête",
     example: 0,
   })
   index: number;
@@ -153,15 +139,11 @@ export class BatchEmbeddingResultDto {
   success: boolean;
 
   @ApiPropertyOptional({
-    description: 'Message d\'erreur',
+    description: "Message d'erreur",
     example: 'Token limit exceeded',
   })
   error?: string;
 }
-
-/**
- * Réponse pour un batch d\'embeddings
- */
 export class BatchEmbeddingResponseDto {
   @ApiProperty({
     description: 'Résultats',
@@ -176,7 +158,7 @@ export class BatchEmbeddingResponseDto {
   successCount: number;
 
   @ApiProperty({
-    description: 'Nombre d\'échecs',
+    description: "Nombre d'échecs",
     example: 1,
   })
   failureCount: number;
@@ -187,10 +169,6 @@ export class BatchEmbeddingResponseDto {
   })
   totalTokens: number;
 }
-
-/**
- * Requête pour calculer la similarité entre un query et des documents
- */
 export class DocumentSimilarityQueryDto {
   @ApiProperty({
     description: 'Texte de la requête',
@@ -211,10 +189,6 @@ export class DocumentSimilarityQueryDto {
   })
   includeContent?: boolean;
 }
-
-/**
- * Similarité avec un document
- */
 export class DocumentSimilarityResultDto {
   @ApiProperty({
     description: 'ID du document',
@@ -240,10 +214,6 @@ export class DocumentSimilarityResultDto {
   })
   content?: string;
 }
-
-/**
- * Réponse pour la similarité documents-query
- */
 export class DocumentSimilarityResponseDto {
   @ApiProperty({
     description: 'Requête utilisée',
@@ -252,7 +222,7 @@ export class DocumentSimilarityResponseDto {
   query: string;
 
   @ApiProperty({
-    description: 'ID de l\'embedding de la requête',
+    description: "ID de l'embedding de la requête",
   })
   queryEmbeddingId: string;
 
@@ -268,4 +238,3 @@ export class DocumentSimilarityResponseDto {
   })
   processingTimeMs: number;
 }
-

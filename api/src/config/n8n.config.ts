@@ -1,8 +1,3 @@
-/**
- * Configuration n8n
- * @description Gère les variables d'environnement pour les webhooks n8n
- */
-
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('n8n', () => ({
@@ -49,4 +44,3 @@ export default registerAs('n8n', () => ({
    */
   retries: parseInt(process.env.N8N_RETRIES || '3', 10),
 }));
-

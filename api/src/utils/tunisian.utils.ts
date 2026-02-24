@@ -1,9 +1,4 @@
 /**
- * Utilitaires Tunisiens
- * @description Fonctions utilitaires spécifiques à la Tunisie
- */
-
-/**
  * Valider un numéro de téléphone tunisien
  * @description Les formats acceptés: +216 XX XXX XXX, 216 XX XXX XXX, 0XX XXX XXX
  * @param phone - Numéro de téléphone à valider
@@ -101,7 +96,11 @@ export function formatTND(amount: number): string {
  */
 export function isValidTNDAmount(amount: number): boolean {
   // Le montant doit être positif et avoir au maximum 3 décimales
-  return amount >= 0 && amount <= 999999999 && /^\d+(\.\d{1,3})?$/.test(amount.toString());
+  return (
+    amount >= 0 &&
+    amount <= 999999999 &&
+    /^\d+(\.\d{1,3})?$/.test(amount.toString())
+  );
 }
 
 /**
@@ -145,14 +144,39 @@ export function amountToWords(amount: number): string {
   const centimes = Math.round((amount - dinars) * 100);
 
   const units = [
-    '', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',
-    'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept',
-    'dix-huit', 'dix-neuf',
+    '',
+    'un',
+    'deux',
+    'trois',
+    'quatre',
+    'cinq',
+    'six',
+    'sept',
+    'huit',
+    'neuf',
+    'dix',
+    'onze',
+    'douze',
+    'treize',
+    'quatorze',
+    'quinze',
+    'seize',
+    'dix-sept',
+    'dix-huit',
+    'dix-neuf',
   ];
 
   const tens = [
-    '', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix',
-    'quatre-vingt', 'quatre-vingt-dix',
+    '',
+    '',
+    'vingt',
+    'trente',
+    'quarante',
+    'cinquante',
+    'soixante',
+    'soixante-dix',
+    'quatre-vingt',
+    'quatre-vingt-dix',
   ];
 
   function convertNumber(n: number): string {
@@ -166,7 +190,15 @@ export function amountToWords(amount: number): string {
         result = units[10 + n - 10 * ten];
       }
       if (unit === 1 && ten !== 0 && ten !== 8) result += ' et un';
-      if (unit > 0 && ten !== 0 && ten !== 8 && ten !== 1 && ten !== 7 && ten !== 9) result += `-${units[unit]}`;
+      if (
+        unit > 0 &&
+        ten !== 0 &&
+        ten !== 8 &&
+        ten !== 1 &&
+        ten !== 7 &&
+        ten !== 9
+      )
+        result += `-${units[unit]}`;
       return result;
     }
     if (n < 1000) {
@@ -291,4 +323,3 @@ export function getPhoneOperator(phone: string): string {
 
   return 'Inconnu';
 }
-

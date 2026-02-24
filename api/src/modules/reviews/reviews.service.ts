@@ -59,12 +59,10 @@ export class ReviewsService {
     }
 
     // Vérifier que l'utilisateur n'a pas déjà laissé un avis pour ce produit
-    const existingReview = await this.prisma.review.findUnique({
+    const existingReview = await this.prisma.review.findFirst({
       where: {
-        productId_userId: {
-          productId,
-          userId,
-        },
+        productId,
+        userId,
       },
     });
 
@@ -444,6 +442,158 @@ export class ReviewsService {
   }
 
   /**
+   * [ADMIN] Liste tous les avis avec modération
+   */
+  async findAllForAdmin(
+    page: number,
+    limit: number,
+    status?: string,
+  ): Promise<PaginatedReviewsResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ReviewWhereInput = {};
+
+    // Filtrer par statut (hidden ou non)
+    if (status === 'hidden') {
+      // Les avis cachés sont marqués avec un champ isHidden (à ajouter)
+      // Pour l'instant, on retourne tous
+    } else if (status === 'approved') {
+      // Uniquement les avis approuvés
+    }
+
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        skip,
+        take: limit,
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true,
+            },
+          },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+
+    const data = reviews.map((review) => ({
+      ...this.formatReview(review),
+      userFirstName: review.user.firstName ?? undefined,
+      userLastName: review.user.lastName ?? undefined,
+      userEmail: review.user.email,
+      product: review.product,
+    }));
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * [ADMIN] Masquer un avis
+   */
+  async hideReview(id: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+
+    if (!review) {
+      throw new NotFoundException('Avis non trouvé');
+    }
+
+    // Marquer comme caché (en attendant un champ isHidden)
+    return this.prisma.review.update({
+      where: { id },
+      data: {
+        comment: '[Avis masqué par l\'administrateur]',
+      },
+      include: {
+        user: { select: { firstName: true, lastName: true } },
+        product: { select: { name: true } },
+      },
+    });
+  }
+
+  /**
+   * [ADMIN] Approuver un avis
+   */
+  async approveReview(id: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+
+    if (!review) {
+      throw new NotFoundException('Avis non trouvé');
+    }
+
+    // Pour l'instant, retourne juste l'avis (déjà approuvé par défaut)
+    return this.prisma.review.findUnique({
+      where: { id },
+      include: {
+        user: { select: { firstName: true, lastName: true } },
+        product: { select: { name: true } },
+      },
+    });
+  }
+
+  /**
+   * [ADMIN] Supprimer définitivement un avis
+   */
+  async deleteReviewAdmin(id: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+
+    if (!review) {
+      throw new NotFoundException('Avis non trouvé');
+    }
+
+    await this.prisma.review.delete({ where: { id } });
+  }
+
+  /**
+   * [ADMIN] Statistiques des avis
+   */
+  async getStats() {
+    const [total, averageRating, with5Stars, with4Stars, with3Stars, with2Stars, with1Star] =
+      await Promise.all([
+        this.prisma.review.count(),
+        this.prisma.review.aggregate({
+          _avg: { rating: true },
+        }),
+        this.prisma.review.count({ where: { rating: 5 } }),
+        this.prisma.review.count({ where: { rating: 4 } }),
+        this.prisma.review.count({ where: { rating: 3 } }),
+        this.prisma.review.count({ where: { rating: 2 } }),
+        this.prisma.review.count({ where: { rating: 1 } }),
+      ]);
+
+    return {
+      total,
+      averageRating: Number(averageRating._avg.rating?.toFixed(2) || 0),
+      distribution: {
+        5: with5Stars,
+        4: with4Stars,
+        3: with3Stars,
+        2: with2Stars,
+        1: with1Star,
+      },
+    };
+  }
+
+  /**
    * Formater un avis pour la réponse
    * @param review Avis avec relations
    * @returns Avis formaté
@@ -460,11 +610,11 @@ export class ReviewsService {
     return {
       id: review.id,
       rating: review.rating,
-      comment: review.comment || undefined,
+      comment: review.comment ?? undefined,
       productId: review.productId,
       userId: review.userId,
-      userFirstName: review.user.firstName,
-      userLastName: review.user.lastName,
+      userFirstName: review.user.firstName ?? undefined,
+      userLastName: review.user.lastName ?? undefined,
       createdAt: review.createdAt,
       updatedAt: review.updatedAt,
     };

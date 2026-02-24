@@ -1,18 +1,10 @@
-/**
- * Service AI RAG
- * @description Gère la logique métier pour les embeddings, recherche sémantique et chatbot
- */
-
 import {
   Injectable,
   Logger,
-  BadRequestException,
   InternalServerErrorException,
-  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import OpenAI from 'openai';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as EmbeddingUtils from './utils/embedding.utils';
@@ -35,17 +27,12 @@ import {
   SentimentAnalysisResponseDto,
   SEOGenerationResponseDto,
   KnowledgeDocumentResponseDto,
-  ChatSessionResponseDto,
   KnowledgeBaseStatsResponseDto,
   SearchResultDto,
 } from './dto/rag-response.dto';
 import {
-  Embedding,
-  SimilaritySearchResult,
   ChatSession,
   ProductRecommendation,
-  SentimentAnalysisResult,
-  KnowledgeBaseStats,
   KnowledgeDocumentType,
   ChatMessage,
   DocumentType,
@@ -68,7 +55,9 @@ export class AiService {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
 
     if (!apiKey) {
-      this.logger.warn('OpenAI API key not configured. AI features will not work.');
+      this.logger.warn(
+        'OpenAI API key not configured. AI features will not work.',
+      );
     }
 
     this.openai = new OpenAI({ apiKey });
@@ -77,15 +66,23 @@ export class AiService {
       'OPENAI_EMBEDDING_MODEL',
       'text-embedding-ada-002',
     );
-    this.chatModel = this.configService.get<string>('OPENAI_CHAT_MODEL', 'gpt-3.5-turbo');
-    this.temperature = this.configService.get<number>('OPENAI_TEMPERATURE', 0.7);
+    this.chatModel = this.configService.get<string>(
+      'OPENAI_CHAT_MODEL',
+      'gpt-3.5-turbo',
+    );
+    this.temperature = this.configService.get<number>(
+      'OPENAI_TEMPERATURE',
+      0.7,
+    );
     this.maxTokens = this.configService.get<number>('OPENAI_MAX_TOKENS', 1000);
   }
 
   /**
    * Générer un embedding pour un texte
    */
-  async generateEmbedding(dto: GenerateEmbeddingDto): Promise<EmbeddingResponseDto> {
+  async generateEmbedding(
+    dto: GenerateEmbeddingDto,
+  ): Promise<EmbeddingResponseDto> {
     const startTime = Date.now();
 
     try {
@@ -101,7 +98,8 @@ export class AiService {
       const embedding = response.data[0].embedding;
 
       // Encoder en base64 pour stockage
-      const encodedEmbedding = EmbeddingUtils.encodeEmbeddingToBase64(embedding);
+      const encodedEmbedding =
+        EmbeddingUtils.encodeEmbeddingToBase64(embedding);
 
       // Sauvegarder le document si un ID est fourni
       if (dto.documentId) {
@@ -160,14 +158,15 @@ export class AiService {
     embedding: number[],
   ): Promise<void> {
     try {
-      const encodedEmbedding = EmbeddingUtils.encodeEmbeddingToBase64(embedding);
+      const encodedEmbedding =
+        EmbeddingUtils.encodeEmbeddingToBase64(embedding);
 
       await this.prisma.$executeRaw`
         INSERT INTO ai_knowledge_base (id, content, document_type, embedding, created_at, updated_at)
         VALUES (
           ${documentId}::uuid,
           ${content},
-          ${this.convertDocumentType(documentType).toString()}::text,
+          ${documentType.toString()}::text,
           ${encodedEmbedding}::vector,
           NOW(),
           NOW()
@@ -187,7 +186,9 @@ export class AiService {
   /**
    * Effectuer une recherche sémantique
    */
-  async semanticSearch(dto: SemanticSearchDto): Promise<SemanticSearchResponseDto> {
+  async semanticSearch(
+    dto: SemanticSearchDto,
+  ): Promise<SemanticSearchResponseDto> {
     const startTime = Date.now();
 
     try {
@@ -254,7 +255,9 @@ export class AiService {
       };
     } catch (error) {
       this.logger.error(`Error in semantic search: ${error}`);
-      throw new InternalServerErrorException('Failed to perform semantic search');
+      throw new InternalServerErrorException(
+        'Failed to perform semantic search',
+      );
     }
   }
 
@@ -271,7 +274,7 @@ export class AiService {
         session = await this.getChatSession(dto.sessionId);
       } else {
         session = await this.createChatSession({
-          metadata: {}
+          metadata: {},
         });
       }
 
@@ -291,9 +294,7 @@ export class AiService {
       });
 
       // Construire le contexte
-      const context = searchResults.results
-        .map((r) => r.content)
-        .join('\n\n');
+      const context = searchResults.results.map((r) => r.content).join('\n\n');
 
       // Construire le prompt système
       const systemPrompt = `Tu es un assistant commercial expert pour un site e-commerce.
@@ -355,19 +356,32 @@ RÈGLES:
         sources: searchResults.results.map((r) => r.id),
         processingTimeMs: processingTime,
         model: this.chatModel,
-        confidenceScore: completion.choices[0]?.finish_reason === 'stop' ? 0.9 : 0.7,
-        recommendedProducts: this.extractProductRecommendations(searchResults.results),
+        confidenceScore:
+          completion.choices[0]?.finish_reason === 'stop' ? 0.9 : 0.7,
+        recommendedProducts: this.extractProductRecommendations(
+          searchResults.results,
+        ).map((r) => ({
+          productId: r.productId,
+          name: r.productName,
+          price: r.price,
+          imageUrl: r.imageUrl,
+          matchReason: r.reason,
+        })),
       };
     } catch (error) {
       this.logger.error(`Error in chatbot: ${error}`);
-      throw new InternalServerErrorException('Failed to process chatbot request');
+      throw new InternalServerErrorException(
+        'Failed to process chatbot request',
+      );
     }
   }
+
+  // ==================== CHAT SESSIONS ====================
 
   /**
    * Créer une session de chat
    */
-  async createChatSession(dto: CreateChatSessionDto): Promise<ChatSession> {
+  createChatSession(dto: CreateChatSessionDto): Promise<ChatSession> {
     const session: ChatSession = {
       id: crypto.randomUUID(),
       messages: [],
@@ -377,38 +391,41 @@ RÈGLES:
     };
 
     // Sauvegarder en base de données (à implémenter selon le schéma)
-    return session;
+    return Promise.resolve(session);
   }
 
   /**
    * Récupérer une session de chat
    */
-  async getChatSession(sessionId: string): Promise<ChatSession> {
+  getChatSession(sessionId: string): Promise<ChatSession> {
     // Récupérer depuis la base de données
     // Pour l'instant, retourner une session vide
-    return {
+    return Promise.resolve({
       id: sessionId,
       messages: [],
       metadata: {},
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
   }
 
   /**
    * Sauvegarder une session de chat
    */
-  private async saveChatSession(session: ChatSession): Promise<void> {
+  saveChatSession(session: ChatSession): Promise<void> {
     session.updatedAt = new Date();
     // Sauvegarder en base de données
+    return Promise.resolve();
   }
 
   /**
-   * Générer des recommandations de produits
+   * Générer des recommandations de produits (amélioré avec historique et sentiments)
    */
-  async getProductRecommendations(dto: RecommendationConfigDto): Promise<ProductRecommendationResponseDto> {
+  async getProductRecommendations(
+    dto: RecommendationConfigDto,
+  ): Promise<ProductRecommendationResponseDto> {
     try {
-      // Récupérer l'historique d'achat de l'utilisateur
+      // 1. Récupérer l'historique d'achat de l'utilisateur
       const userPurchases = await this.prisma.order.findMany({
         where: {
           userId: dto.userId,
@@ -425,66 +442,156 @@ RÈGLES:
         take: 10,
       });
 
+      // 2. Récupérer l'historique des recherches
+      const searchHistory = await this.prisma.searchHistory.findMany({
+        where: { userId: dto.userId },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      });
+
+      // 3. Récupérer les avis de l'utilisateur (pour sentiments)
+      const userReviews = await this.prisma.review.findMany({
+        where: { userId: dto.userId },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      });
+
       // Extraire les catégories et produits achetés
       const purchasedProductIds: string[] = [];
       const categoryIds: string[] = [];
-      const brandSet = new Set<string>();
+      const preferredCategories: Record<string, number> = {};
 
       for (const order of userPurchases) {
         for (const item of order.orderItems) {
           purchasedProductIds.push(item.productId);
           if (item.product.categoryId) {
             categoryIds.push(item.product.categoryId);
+            preferredCategories[item.product.categoryId] =
+              (preferredCategories[item.product.categoryId] || 0) + 1;
           }
-          // Analyser les reviews pour les marques populaires
         }
       }
 
-      // Construire une requête de recommandation
-      const searchQuery = 'produits similaires populaires';
-      const searchResults = await this.semanticSearch({
-        query: searchQuery,
-        limit: dto.limit || 5,
-        documentTypes: [KnowledgeDocumentType.PRODUCT],
-      });
+      // Analyser les sentiments des avis
+      let sentimentScore = 0;
+      const sentimentKeywords: string[] = [];
 
-      const recommendations: ProductRecommendation[] = searchResults.results
-        .filter((r) => !purchasedProductIds.includes(r.id))
-        .slice(0, dto.limit || 5)
-        .map((r, index) => ({
-          productId: r.id,
-          productName: r.title || 'Produit',
-          description: r.content,
-          price: Number(r.metadata?.['price']) || 0,
-          score: r.score,
-          reason: index === 0 ? 'Basé sur vos achats récents' : 'Produits populaires',
-        }));
+      for (const review of userReviews) {
+        if (review.comment) {
+          const sentiment = await this.analyzeSentiment({
+            text: review.comment,
+          });
+          sentimentScore += sentiment.score;
+          if (sentiment.positiveKeywords) {
+            sentimentKeywords.push(...sentiment.positiveKeywords);
+          }
+        }
+      }
+
+      const avgSentiment = userReviews.length > 0
+        ? sentimentScore / userReviews.length
+        : 0;
+
+      // Extraire les termes de recherche fréquents
+      const searchTerms = searchHistory
+        .map((s) => s.query)
+        .filter((q, i, arr) => arr.indexOf(q) === i) // Unique
+        .slice(0, 5);
+
+      // 4. Construire les requêtes de recommandation
+      const queries = [
+        ...searchTerms, // Basé sur les recherches
+        ...Object.keys(preferredCategories).map(
+          (catId) => `catégorie:${catId}`,
+        ), // Basé sur les catégories
+        'produits populaires', // Découverte
+      ];
+
+      const allRecommendations: any[] = [];
+
+      for (const query of queries) {
+        const searchResults = await this.semanticSearch({
+          query,
+          limit: Math.ceil((dto.limit || 5) / queries.length),
+          documentTypes: [DocumentType.PRODUCT],
+        });
+
+        for (const result of searchResults.results) {
+          if (
+            !purchasedProductIds.includes(result.id) &&
+            !allRecommendations.find((r) => r.productId === result.id)
+          ) {
+            allRecommendations.push({
+              productId: result.id,
+              productName: result.documentType || 'Produit',
+              description: result.content,
+              price: Number(result.metadata?.['price']) || 0,
+              imageUrl:
+                (result.metadata?.['imageUrl'] as string) ||
+                (result.metadata?.['image_url'] as string) ||
+                undefined,
+              score: result.score,
+              reason: this.getRecommendationReason(query, avgSentiment),
+              query,
+            });
+          }
+        }
+      }
+
+      // Trier par score et prendre le top
+      const recommendations = allRecommendations
+        .sort((a, b) => b.score - a.score)
+        .slice(0, dto.limit || 10);
 
       return {
         userId: dto.userId,
-        recommendationType: 'similar-to-purchased',
-        products: recommendations.map(rec => ({
+        recommendationType: 'personalized',
+        products: recommendations.map((rec) => ({
           productId: rec.productId,
           name: rec.productName,
           description: rec.description,
           price: rec.price,
           imageUrl: rec.imageUrl,
-          category: rec.category,
           score: rec.score,
           reason: rec.reason,
         })),
         totalRecommendations: recommendations.length,
+        metadata: {
+          basedOnSearches: searchTerms.length,
+          basedOnPurchases: purchasedProductIds.length,
+          avgSentiment: Math.round(avgSentiment * 100) / 100,
+        },
       };
     } catch (error) {
       this.logger.error(`Error generating recommendations: ${error}`);
-      throw new InternalServerErrorException('Failed to generate recommendations');
+      throw new InternalServerErrorException(
+        'Failed to generate recommendations',
+      );
     }
+  }
+
+  /**
+   * Helper: Obtenir la raison de la recommandation
+   */
+  private getRecommendationReason(query: string, sentiment: number): string {
+    if (query.startsWith('catégorie:')) {
+      return 'Basé sur vos achats précédents';
+    }
+    if (sentiment > 0.5) {
+      return 'Sélectionné selon vos préférences';
+    }
+    if (sentiment < -0.5) {
+      return 'Nouveautés pour vous';
+    }
+    return 'Recommandé pour vous';
   }
 
   /**
    * Analyser le sentiment d'un texte
    */
-  async analyzeSentiment(dto: SentimentAnalysisDto): Promise<SentimentAnalysisResponseDto> {
+  async analyzeSentiment(
+    dto: SentimentAnalysisDto,
+  ): Promise<SentimentAnalysisResponseDto> {
     try {
       // Utiliser l'API pour analyser le sentiment
       const systemPrompt = `Analyse le sentiment du texte suivant.
@@ -528,12 +635,28 @@ Retourne un JSON avec:
    */
   private simpleSentimentAnalysis(text: string): SentimentAnalysisResponseDto {
     const positiveWords = [
-      'excellent', 'superbe', 'parfait', 'génial', 'fantastique',
-      'recommande', 'satisfait', 'content', 'heureux', 'qualité',
+      'excellent',
+      'superbe',
+      'parfait',
+      'génial',
+      'fantastique',
+      'recommande',
+      'satisfait',
+      'content',
+      'heureux',
+      'qualité',
     ];
     const negativeWords = [
-      'déçu', 'mauvais', 'nul', 'horrible', 'terrible',
-      'problème', 'retard', 'cher', 'décevant', 'arnaque',
+      'déçu',
+      'mauvais',
+      'nul',
+      'horrible',
+      'terrible',
+      'problème',
+      'retard',
+      'cher',
+      'décevant',
+      'arnaque',
     ];
 
     const lowerText = text.toLowerCase();
@@ -549,7 +672,8 @@ Retourne un JSON avec:
 
     const total = positiveCount + negativeCount;
     const score = total > 0 ? (positiveCount - negativeCount) / total : 0;
-    const label = score > 0.2 ? 'positive' : score < -0.2 ? 'negative' : 'neutral';
+    const label =
+      score > 0.2 ? 'positive' : score < -0.2 ? 'negative' : 'neutral';
     const confidence = Math.min(0.5 + total * 0.1, 0.8);
 
     return {
@@ -603,7 +727,8 @@ Retourne un JSON avec:
 
       return {
         title: parsed.title || dto.title,
-        metaDescription: parsed.meta_description || dto.description.substring(0, 150),
+        metaDescription:
+          parsed.meta_description || dto.description.substring(0, 150),
         keywords: parsed.keywords || dto.keywords,
         suggestedH1: parsed.suggested_h1,
         longTailKeywords: parsed.long_tail_keywords || [],
@@ -624,7 +749,9 @@ Retourne un JSON avec:
   /**
    * Ajouter un document à la base de connaissances
    */
-  async addKnowledgeDocument(dto: AddKnowledgeDocumentDto): Promise<KnowledgeDocumentResponseDto> {
+  async addKnowledgeDocument(
+    dto: AddKnowledgeDocumentDto,
+  ): Promise<KnowledgeDocumentResponseDto> {
     try {
       const documentId = dto.externalId || crypto.randomUUID();
       const embeddingResponse = await this.generateEmbedding({
@@ -656,14 +783,18 @@ Retourne un JSON avec:
       };
     } catch (error) {
       this.logger.error(`Error adding knowledge document: ${error}`);
-      throw new InternalServerErrorException('Failed to add knowledge document');
+      throw new InternalServerErrorException(
+        'Failed to add knowledge document',
+      );
     }
   }
 
   /**
    * Indexer un produit dans la base de connaissances
    */
-  async indexProduct(dto: IndexProductDto): Promise<KnowledgeDocumentResponseDto> {
+  async indexProduct(
+    dto: IndexProductDto,
+  ): Promise<KnowledgeDocumentResponseDto> {
     const content = `
       Produit: ${dto.name}
       Description: ${dto.description}
@@ -726,7 +857,9 @@ Retourne un JSON avec:
       return {
         totalDocuments,
         documentsByType,
-        embeddingDimension: stats[0]?.embedding_dimension ? Number(stats[0].embedding_dimension) : 1536,
+        embeddingDimension: stats[0]?.embedding_dimension
+          ? Number(stats[0].embedding_dimension)
+          : 1536,
         lastUpdated: lastUpdated.toISOString(),
       };
     } catch (error) {
@@ -744,7 +877,9 @@ Retourne un JSON avec:
   /**
    * Extraire les recommandations de produits depuis les résultats de recherche
    */
-  private extractProductRecommendations(results: SearchResultDto[]): ProductRecommendation[] {
+  private extractProductRecommendations(
+    results: SearchResultDto[],
+  ): ProductRecommendation[] {
     return results.slice(0, 3).map((r) => ({
       productId: r.id,
       productName: r.title || 'Produit',
@@ -947,7 +1082,10 @@ Retourne un JSON avec:
     }>;
   }> {
     // Extraire les mots-clés de la requête
-    const keywords = dto.query.toLowerCase().split(' ').filter((k) => k.length > 2);
+    const keywords = dto.query
+      .toLowerCase()
+      .split(' ')
+      .filter((k) => k.length > 2);
 
     const where: Record<string, unknown> = {
       isActive: true,
@@ -974,7 +1112,8 @@ Retourne un JSON avec:
         return true;
       })
       .map((product) => {
-        const searchText = `${product.name} ${product.description || ''}`.toLowerCase();
+        const searchText =
+          `${product.name} ${product.description || ''}`.toLowerCase();
         const matches = keywords.filter((k) => searchText.includes(k)).length;
         return {
           product,
@@ -1000,4 +1139,3 @@ Retourne un JSON avec:
     };
   }
 }
-

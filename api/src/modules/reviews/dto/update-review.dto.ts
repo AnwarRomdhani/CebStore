@@ -27,7 +27,7 @@ export class UpdateReviewDto {
   rating?: number;
 
   @ApiPropertyOptional({
-    description: 'Nouveau commentaire de l\'avis',
+    description: "Nouveau commentaire de l'avis",
     example: 'Produit de bonne qualité, livraison rapide.',
     maxLength: 2000,
   })
@@ -36,4 +36,3 @@ export class UpdateReviewDto {
   @MaxLength(2000)
   comment?: string;
 }
-

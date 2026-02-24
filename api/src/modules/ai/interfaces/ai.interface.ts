@@ -1,11 +1,3 @@
-/**
- * Interfaces pour le module AI RAG
- * @description Définitions des types pour la recherche sémantique et le chatbot
- */
-
-/**
- * Représente un embedding vectoriel
- */
 export interface Embedding {
   /** Valeurs du vecteur */
   values: number[];
@@ -247,4 +239,3 @@ export interface RAGQuery {
   /** ID de session de chat */
   chatSessionId?: string;
 }
-

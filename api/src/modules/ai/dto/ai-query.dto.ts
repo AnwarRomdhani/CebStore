@@ -1,8 +1,3 @@
-/**
- * DTO pour les requêtes AI
- * @description Data Transfer Objects pour les endpoints AI
- */
-
 import {
   IsString,
   IsNotEmpty,
@@ -13,16 +8,12 @@ import {
   IsArray,
   IsEnum,
   IsBoolean,
-  ValidateNested,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
-/**
- * Type de document pour la recherche
- */
 export enum DocumentType {
   PRODUCT = 'PRODUCT',
   CATEGORY = 'CATEGORY',
@@ -31,10 +22,6 @@ export enum DocumentType {
   REVIEW = 'REVIEW',
   GENERAL = 'GENERAL',
 }
-
-/**
- * Requête pour générer un embedding
- */
 export class GenerateEmbeddingDto {
   @ApiProperty({
     description: 'Texte à encoder en embedding',
@@ -64,9 +51,6 @@ export class GenerateEmbeddingDto {
   documentType?: DocumentType;
 }
 
-/**
- * Requête pour la recherche sémantique
- */
 export class SemanticSearchDto {
   @ApiProperty({
     description: 'Requête de recherche',
@@ -113,12 +97,9 @@ export class SemanticSearchDto {
   similarityThreshold?: number = 0;
 }
 
-/**
- * Requête pour le chatbot
- */
 export class ChatbotQueryDto {
   @ApiProperty({
-    description: 'Message de l\'utilisateur',
+    description: "Message de l'utilisateur",
     example: 'Quel est le meilleur smartphone pour la photo?',
   })
   @IsString()
@@ -136,7 +117,7 @@ export class ChatbotQueryDto {
   sessionId?: string;
 
   @ApiPropertyOptional({
-    description: 'Inclure l\'historique récent dans le contexte',
+    description: "Inclure l'historique récent dans le contexte",
     example: true,
   })
   @IsOptional()
@@ -155,10 +136,6 @@ export class ChatbotQueryDto {
   @Type(() => Number)
   temperature?: number = 0.7;
 }
-
-/**
- * Message dans une conversation
- */
 export class ChatMessageDto {
   @ApiProperty({
     description: 'Rôle du message',
@@ -178,10 +155,6 @@ export class ChatMessageDto {
   @MaxLength(4000)
   content: string;
 }
-
-/**
- * Créer une nouvelle session de chat
- */
 export class CreateChatSessionDto {
   @ApiPropertyOptional({
     description: 'Métadonnées initiales de la session',
@@ -190,13 +163,9 @@ export class CreateChatSessionDto {
   @IsOptional()
   metadata?: Record<string, unknown>;
 }
-
-/**
- * Paramètres pour les recommandations
- */
 export class RecommendationConfigDto {
   @ApiProperty({
-    description: 'ID de l\'utilisateur',
+    description: "ID de l'utilisateur",
     example: 'user-uuid-123',
   })
   @IsString()
@@ -244,10 +213,6 @@ export class RecommendationConfigDto {
   @Type(() => Number)
   maxPrice?: number;
 }
-
-/**
- * Configuration pour l'analyse de sentiment
- */
 export class SentimentAnalysisDto {
   @ApiProperty({
     description: 'Texte à analyser',
@@ -268,10 +233,6 @@ export class SentimentAnalysisDto {
   @IsEnum(DocumentType)
   documentType?: DocumentType;
 }
-
-/**
- * Configuration pour la génération SEO
- */
 export class SEOGenerationDto {
   @ApiProperty({
     description: 'Titre du produit',
@@ -284,7 +245,8 @@ export class SEOGenerationDto {
 
   @ApiProperty({
     description: 'Description courte du produit',
-    example: 'Le smartphone le plus avancé de Samsung avec un appareil photo de 200MP',
+    example:
+      'Le smartphone le plus avancé de Samsung avec un appareil photo de 200MP',
   })
   @IsString()
   @IsNotEmpty()
@@ -337,14 +299,11 @@ export class SEOGenerationDto {
   @IsString()
   tone?: 'professional' | 'casual' | 'persuasive' = 'professional';
 }
-
-/**
- * Requête pour ajouter un document à la base de connaissances
- */
 export class AddKnowledgeDocumentDto {
   @ApiProperty({
     description: 'Contenu textuel du document',
-    example: 'Notre politique de retour permet de retourner les produits dans les 30 jours',
+    example:
+      'Notre politique de retour permet de retourner les produits dans les 30 jours',
   })
   @IsString()
   @IsNotEmpty()
@@ -384,10 +343,6 @@ export class AddKnowledgeDocumentDto {
   @MaxLength(255)
   externalId?: string;
 }
-
-/**
- * Requête pour indexer un produit
- */
 export class IndexProductDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -452,11 +407,6 @@ export class IndexProductDto {
   @IsString({ each: true })
   tags?: string[];
 }
-
-/**
- * Requête pour rechercher des produits similaires
- * Exemple: "chaussures pour homme"
- */
 export class ProductSimilaritySearchDto {
   @ApiProperty({
     description: 'Requête de recherche textuelle',
@@ -519,4 +469,3 @@ export class ProductSimilaritySearchDto {
   @IsString({ each: true })
   excludeIds?: string[];
 }
-

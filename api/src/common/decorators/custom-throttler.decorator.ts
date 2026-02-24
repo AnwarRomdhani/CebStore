@@ -1,8 +1,5 @@
-// Custom throttl config
-
 import { Throttle } from '@nestjs/throttler';
 
-// Strict rate for auth, payments
 export const StrictThrottle = () =>
   Throttle({
     default: {
@@ -11,7 +8,6 @@ export const StrictThrottle = () =>
     },
   });
 
-// Moderate rate for orders
 export const ModerateThrottle = () =>
   Throttle({
     default: {
@@ -20,7 +16,6 @@ export const ModerateThrottle = () =>
     },
   });
 
-// Relaxed rate for read operations
 export const RelaxedThrottle = () =>
   Throttle({
     default: {

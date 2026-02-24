@@ -1,8 +1,3 @@
-/**
- * Validation Pipe
- * @description Pipe de validation global avec options personnalisées
- */
-
 import {
   PipeTransform,
   Injectable,
@@ -12,9 +7,6 @@ import {
 } from '@nestjs/common';
 import { validate, ValidatorOptions } from 'class-validator';
 
-/**
- * Options personnalisées pour le pipe de validation
- */
 export interface CustomValidationPipeOptions extends ValidatorOptions {
   /**
    * Transformer les données automatiquement
@@ -40,20 +32,11 @@ export interface CustomValidationPipeOptions extends ValidatorOptions {
    */
   enableImplicitConversion?: boolean;
 
-  /**
-   * Groupes de validation à utiliser
-   */
   groups?: string[];
 
-  /**
-   * Message d'erreur personnalisé
-   */
   message?: string | ((errors: ValidationError[]) => string);
 }
 
-/**
- * Pipe de validation par défaut
- */
 @Injectable()
 export class CustomValidationPipe implements PipeTransform<unknown> {
   private readonly options: CustomValidationPipeOptions;
@@ -74,35 +57,37 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
    * @param metadata - Métadonnées du paramètre
    * @returns Valeur validée et transformée
    */
-  async transform(value: unknown, metadata: ArgumentMetadata): Promise<unknown> {
-    // Si la valeur est null ou undefined et que le paramètre n'est pas requis, retourner null
+  async transform(
+    value: unknown,
+    metadata: ArgumentMetadata,
+  ): Promise<unknown> {
     if (value === null || value === undefined) {
-      if (metadata.type === 'body' || metadata.type === 'query' || metadata.type === 'param') {
+      if (
+        metadata.type === 'body' ||
+        metadata.type === 'query' ||
+        metadata.type === 'param'
+      ) {
         return value;
       }
     }
 
     const { metatype } = metadata;
 
-    // Si ce n'est pas une classe, retourner la valeur telle quelle
     if (!metatype || typeof metatype === 'string') {
       return value;
     }
 
-    // Créer une instance de la classe
-    const object = this.toValidate(metatype);
+    const object = this.toValidateInstance(metatype);
     if (!object) {
       return value;
     }
 
-    // Valider l'objet
-    const errors = await validate(object as any, this.options as any);
+    const errors = await validate(object as object, this.options);
 
     if (errors.length > 0) {
       throw new BadRequestException(this.formatErrors(errors));
     }
 
-    // Si l'option transform est activée, retourner l'objet transformé
     if (this.options.transform) {
       return this.transformValue(object, value);
     }
@@ -115,8 +100,16 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
    * @param metatype - Type à vérifier
    * @returns boolean
    */
-  private toValidate(metatype: new (...args: unknown[]) => unknown): boolean {
-    const types: (new (...args: unknown[]) => unknown)[] = [String, Boolean, Number, Array, Object];
+  private toValidateInstance(
+    metatype: new (...args: unknown[]) => unknown,
+  ): unknown {
+    const types: (new (...args: unknown[]) => unknown)[] = [
+      String,
+      Boolean,
+      Number,
+      Array,
+      Object,
+    ];
     return !types.includes(metatype);
   }
 
@@ -126,17 +119,8 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
    * @param value - Valeur brute
    * @returns Valeur transformée
    */
-  private transformValue(
-    object: unknown,
-    value: unknown,
-  ): unknown {
-    // La transformation est gérée automatiquement par class-transformer
-    // Si le value a la méthode toClassOnly, l'utiliser
-    if (
-      typeof value === 'object' &&
-      value !== null &&
-      'toClassOnly' in value
-    ) {
+  private transformValue(object: unknown, value: unknown): unknown {
+    if (typeof value === 'object' && value !== null && 'toClassOnly' in value) {
       return (value as { toClassOnly(): unknown }).toClassOnly();
     }
 
@@ -153,8 +137,7 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
 
     for (const error of errors) {
       if (error.constraints) {
-        for (const [constraint, message] of Object.entries(error.constraints)) {
-          // Formater le message de contrainte
+        for (const [, message] of Object.entries(error.constraints)) {
           const formattedMessage = this.formatConstraintMessage(
             message,
             error.property,
@@ -164,9 +147,11 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
         }
       }
 
-      // Récursivement traiter les erreurs enfants
       if (error.children && error.children.length > 0) {
-        const childMessages = this.formatChildrenErrors(error.children, error.property);
+        const childMessages = this.formatChildrenErrors(
+          error.children,
+          error.property,
+        );
         messages.push(...childMessages);
       }
     }
@@ -201,7 +186,9 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
       }
 
       if (child.children && child.children.length > 0) {
-        messages.push(...this.formatChildrenErrors(child.children, propertyPath));
+        messages.push(
+          ...this.formatChildrenErrors(child.children, propertyPath),
+        );
       }
     }
 
@@ -222,7 +209,6 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
   ): string {
     let formattedMessage = message;
 
-    // Remplacer les placeholders
     formattedMessage = formattedMessage.replace(/{property}/g, property);
     formattedMessage = formattedMessage.replace(/{value}/g, String(value));
     formattedMessage = formattedMessage.replace(
@@ -230,7 +216,6 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
       property.split('.')[0],
     );
 
-    // Si c'est un message IsInt, IsPositive, etc., le reformater
     if (message.includes('must be a valid number')) {
       formattedMessage = `Le champ "${property}" doit être un nombre valide`;
     } else if (message.includes('must be a valid integer')) {
@@ -249,9 +234,6 @@ export class CustomValidationPipe implements PipeTransform<unknown> {
   }
 }
 
-/**
- * Pipe pour valider les IDs (UUID, MongoDB ObjectId, etc.)
- */
 @Injectable()
 export class IdValidationPipe implements PipeTransform<string> {
   private readonly formats: ('uuid' | 'mongoId' | 'cuid')[];
@@ -273,17 +255,14 @@ export class IdValidationPipe implements PipeTransform<string> {
       );
     }
 
-    // Valider le format UUID
     if (this.formats.includes('uuid') && this.isValidUUID(value)) {
       return value;
     }
 
-    // Valider le format CUID (utilisé par Prisma)
     if (this.formats.includes('cuid') && this.isValidCuid(value)) {
       return value;
     }
 
-    // Si aucun format ne correspond, lever une erreur
     throw new BadRequestException(
       `Le paramètre "${metadata.data}" a un format invalide. Formats acceptés: ${this.formats.join(', ')}`,
     );
@@ -306,9 +285,7 @@ export class IdValidationPipe implements PipeTransform<string> {
    * @returns boolean
    */
   private isValidCuid(value: string): boolean {
-    // Les CUIDs commencent par 'c' suivi de lettres et chiffres
     const cuidRegex = /^c[0-9a-z]{20,24}$/i;
     return cuidRegex.test(value);
   }
 }
-

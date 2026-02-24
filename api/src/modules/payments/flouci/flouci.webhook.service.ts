@@ -8,10 +8,15 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FlouciWebhookDto, FlouciWebhookData } from './flouci.types';
+import { FlouciWebhookData, FlouciTransactionStatus } from './flouci.types';
 import { Prisma } from '@prisma/client';
-import { verifyFlouciWebhookSignature, extractOrderIdFromTrackingId } from './utils/flouci-signature.util';
+import { OrderStatus } from '@prisma/client';
+import {
+  verifyFlouciWebhookSignature,
+  extractOrderIdFromTrackingId,
+} from './utils/flouci-signature.util';
 import { OrdersService } from 'src/modules/orders/orders.service';
+import { UpdateOrderDto } from 'src/modules/orders/dto/update-order.dto';
 
 @Injectable()
 export class FlouciWebhookService {
@@ -26,8 +31,10 @@ export class FlouciWebhookService {
     private readonly httpService: HttpService,
     private readonly ordersService: OrdersService,
   ) {
-    this.webhookSecret = this.configService.get<string>('FLOUCI_WEBHOOK_SECRET') || '';
-    this.n8nWebhookUrl = this.configService.get<string>('N8N_PAYMENT_WEBHOOK') || '';
+    this.webhookSecret =
+      this.configService.get<string>('FLOUCI_WEBHOOK_SECRET') || '';
+    this.n8nWebhookUrl =
+      this.configService.get<string>('N8N_PAYMENT_WEBHOOK') || '';
   }
 
   /**
@@ -37,7 +44,7 @@ export class FlouciWebhookService {
    * @returns Résultat du traitement
    */
   async processWebhook(
-    payload: FlouciWebhookDto,
+    payload: FlouciWebhookData,
     signature?: string,
   ): Promise<{
     received: boolean;
@@ -48,9 +55,11 @@ export class FlouciWebhookService {
   }> {
     try {
       // 1. Vérifier la signature
-      const signatureValid = await this.verifyWebhookSignature(payload, signature);
+      const signatureValid = this.verifyWebhookSignature(payload, signature);
       if (!signatureValid) {
-        this.logger.warn(`Invalid webhook signature for order tracking: ${payload.developer_tracking_id}`);
+        this.logger.warn(
+          `Invalid webhook signature for order tracking: ${payload.developer_tracking_id}`,
+        );
       }
 
       // 2. Extraire l'ID de commande
@@ -61,6 +70,7 @@ export class FlouciWebhookService {
       if (!payment) {
         this.logger.warn(`Payment not found for order: ${orderId}`);
         return {
+          received: true,
           success: true,
           message: 'Webhook reçu, paiement non trouvé',
         };
@@ -86,14 +96,16 @@ export class FlouciWebhookService {
       if (newStatus === 'COMPLETED') {
         await this.handleSuccessfulPayment(orderId, payment);
       } else if (newStatus === 'FAILED') {
-        await this.handleFailedPayment(orderId, payload);
+        this.handleFailedPayment(orderId, payload);
       }
 
       // 7. Déclencher les workflows n8n
       await this.triggerN8nWorkflow(orderId, newStatus, payload);
 
       // 8. Logger le traitement
-      this.logger.log(`Webhook processed: ${payload.developer_tracking_id} -> ${newStatus}`);
+      this.logger.log(
+        `Webhook processed: ${payload.developer_tracking_id} -> ${newStatus}`,
+      );
 
       return {
         received: true,
@@ -115,10 +127,10 @@ export class FlouciWebhookService {
   /**
    * Vérifier la signature du webhook
    */
-  private async verifyWebhookSignature(
-    payload: FlouciWebhookDto,
+  private verifyWebhookSignature(
+    payload: FlouciWebhookData,
     signature?: string,
-  ): Promise<boolean> {
+  ): boolean {
     if (!this.webhookSecret || !signature) {
       return true; // Pas de secret configuré, on accepte
     }
@@ -165,10 +177,13 @@ export class FlouciWebhookService {
    */
   private isDuplicateWebhook(
     payment: { status: string; updatedAt: Date },
-    payload: FlouciWebhookDto,
+    payload: FlouciWebhookData,
   ): boolean {
     // Si le paiement est déjà complété et le webhook indique SUCCESS
-    if (payment.status === 'COMPLETED' && payload.status === 'SUCCESS') {
+    if (
+      payment.status === 'COMPLETED' &&
+      payload.status === FlouciTransactionStatus.SUCCESS
+    ) {
       // Vérifier si le webhook est récent (moins de 5 minutes)
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       return payment.updatedAt > fiveMinutesAgo;
@@ -180,12 +195,12 @@ export class FlouciWebhookService {
    * Mapper le statut Flouci vers notre enum
    */
   private mapStatus(
-    status: 'PENDING' | 'SUCCESS' | 'FAILED',
+    status: FlouciTransactionStatus,
   ): 'PENDING' | 'COMPLETED' | 'FAILED' {
     switch (status) {
-      case 'SUCCESS':
+      case FlouciTransactionStatus.SUCCESS:
         return 'COMPLETED';
-      case 'FAILED':
+      case FlouciTransactionStatus.FAILED:
         return 'FAILED';
       default:
         return 'PENDING';
@@ -210,29 +225,29 @@ export class FlouciWebhookService {
    */
   private async handleSuccessfulPayment(
     orderId: string,
-    payment: { id: string; userId: string; amount: Prisma.Decimal },
+    _payment: { id: string; userId: string; amount: Prisma.Decimal },
   ): Promise<void> {
     try {
-      // Mettre à jour le statut de la commande
-      await this.ordersService.update(
-        orderId,
-        { status: 'PROCESSING' } as any,
-        undefined,
-      );
+      const updateDto: UpdateOrderDto = { status: OrderStatus.PROCESSING };
+      await this.ordersService.update(orderId, updateDto, undefined);
 
-      this.logger.log(`Order ${orderId} marked as processing after successful payment`);
+      this.logger.log(
+        `Order ${orderId} marked as processing after successful payment`,
+      );
     } catch (error) {
-      this.logger.error(`Error handling successful payment for order ${orderId}: ${error}`);
+      this.logger.error(
+        `Error handling successful payment for order ${orderId}: ${error}`,
+      );
     }
   }
 
   /**
    * Gérer un paiement échoué
    */
-  private async handleFailedPayment(
+  private handleFailedPayment(
     orderId: string,
-    payload: FlouciWebhookDto,
-  ): Promise<void> {
+    payload: FlouciWebhookData,
+  ): void {
     this.logger.warn(`Payment failed for order ${orderId}: ${payload.status}`);
   }
 
@@ -242,7 +257,7 @@ export class FlouciWebhookService {
   private async triggerN8nWorkflow(
     orderId: string,
     status: string,
-    payload: FlouciWebhookDto,
+    payload: FlouciWebhookData,
   ): Promise<void> {
     if (!this.n8nWebhookUrl) {
       return;
@@ -260,21 +275,23 @@ export class FlouciWebhookService {
         }),
       );
     } catch (error) {
-      this.logger.error(`Error triggering n8n workflow for order ${orderId}: ${error}`);
+      this.logger.error(
+        `Error triggering n8n workflow for order ${orderId}: ${error}`,
+      );
     }
   }
 
   /**
-   * Obtenir l\'historique des webhooks pour un paiement
+   * Obtenir l'historique des webhooks pour un paiement
    */
-  async getWebhookHistory(orderId: string): Promise<Array<{
-    timestamp: Date;
-    status: string;
-    payload: Record<string, unknown>;
-  }>> {
+  getWebhookHistory(_orderId: string): Promise<
+    Array<{
+      timestamp: Date;
+      status: string;
+      payload: Record<string, unknown>;
+    }>
+  > {
     // Cette fonctionnalité nécessiterait une table de logs de webhooks
-    // Pour linstant, retourner un tableau vide
-    return [];
+    return Promise.resolve([]);
   }
 }
-

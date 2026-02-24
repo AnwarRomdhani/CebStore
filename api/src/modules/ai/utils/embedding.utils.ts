@@ -3,12 +3,9 @@
  * @description Fonctions pour manipuler et calculer les embeddings vectoriels
  */
 
-import { Logger } from '@nestjs/common';
-
 /**
- * Logger pour les utilitaires d'embedding
+ * Utilitaires pour les embeddings - logger disponible si besoin de debug
  */
-const logger = new Logger('EmbeddingUtils');
 
 /**
  * Dimension par défaut pour les embeddings OpenAI
@@ -155,7 +152,10 @@ export function vectorNorm(vector: number[]): number {
  * @param targetDimension - Dimension cible
  * @returns Vecteur tronqué
  */
-export function truncateVector(vector: number[], targetDimension: number): number[] {
+export function truncateVector(
+  vector: number[],
+  targetDimension: number,
+): number[] {
   if (targetDimension >= vector.length) {
     return vector;
   }
@@ -281,9 +281,7 @@ export function findTopKSimilar(
   }));
 
   // Trier par score décroissant et prendre les topK
-  return similarities
-    .sort((a, b) => b.score - a.score)
-    .slice(0, topK);
+  return similarities.sort((a, b) => b.score - a.score).slice(0, topK);
 }
 
 /**
@@ -491,4 +489,3 @@ export class PgVectorUtils {
     return `${column} ${clause}`;
   }
 }
-

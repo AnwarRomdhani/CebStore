@@ -1,13 +1,4 @@
-/**
- * DTO pour les réponses AI RAG
- * @description Data Transfer Objects pour les réponses des endpoints AI
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-/**
- * Réponse pour la génération d'un embedding
- */
 export class EmbeddingResponseDto {
   @ApiProperty({
     description: 'ID du document si fourni',
@@ -42,10 +33,6 @@ export class EmbeddingResponseDto {
     totalTokens: number;
   };
 }
-
-/**
- * Résultat d'un document trouvé
- */
 export class SearchResultDto {
   @ApiProperty({
     description: 'ID du document',
@@ -61,7 +48,14 @@ export class SearchResultDto {
 
   @ApiProperty({
     description: 'Type de document',
-    enum: { PRODUCT: 'PRODUCT', CATEGORY: 'CATEGORY', FAQ: 'FAQ', POLICY: 'POLICY', REVIEW: 'REVIEW', GENERAL: 'GENERAL' },
+    enum: {
+      PRODUCT: 'PRODUCT',
+      CATEGORY: 'CATEGORY',
+      FAQ: 'FAQ',
+      POLICY: 'POLICY',
+      REVIEW: 'REVIEW',
+      GENERAL: 'GENERAL',
+    },
     example: 'PRODUCT',
   })
   documentType: string;
@@ -74,12 +68,13 @@ export class SearchResultDto {
 
   @ApiPropertyOptional({
     description: 'Contenu textuel',
-    example: 'Le Samsung Galaxy S24 Ultra dispose d\'un appareil photo de 200MP...',
+    example:
+      "Le Samsung Galaxy S24 Ultra dispose d'un appareil photo de 200MP...",
   })
   content?: string;
 
   @ApiPropertyOptional({
-    description: 'URL de l\'image',
+    description: "URL de l'image",
     example: 'https://example.com/image.jpg',
   })
   imageUrl?: string;
@@ -96,10 +91,6 @@ export class SearchResultDto {
   })
   metadata?: Record<string, unknown>;
 }
-
-/**
- * Réponse pour la recherche sémantique
- */
 export class SemanticSearchResponseDto {
   @ApiProperty({
     description: 'Requête utilisée',
@@ -131,10 +122,6 @@ export class SemanticSearchResponseDto {
   })
   model: string;
 }
-
-/**
- * Réponse du chatbot
- */
 export class ChatbotResponseDto {
   @ApiProperty({
     description: 'ID de la session',
@@ -144,7 +131,8 @@ export class ChatbotResponseDto {
 
   @ApiProperty({
     description: 'Réponse générée',
-    example: 'Basé sur votre recherche, je vous recommande le Samsung Galaxy S24 Ultra...',
+    example:
+      'Basé sur votre recherche, je vous recommande le Samsung Galaxy S24 Ultra...',
   })
   answer: string;
 
@@ -185,10 +173,6 @@ export class ChatbotResponseDto {
     matchReason: string;
   }>;
 }
-
-/**
- * Session de conversation
- */
 export class ChatSessionResponseDto {
   @ApiProperty({
     description: 'ID de la session',
@@ -197,7 +181,7 @@ export class ChatSessionResponseDto {
   id: string;
 
   @ApiPropertyOptional({
-    description: 'ID de l\'utilisateur',
+    description: "ID de l'utilisateur",
     example: 'user-uuid-123',
   })
   userId?: string;
@@ -207,7 +191,11 @@ export class ChatSessionResponseDto {
     type: [Object],
     example: [
       { role: 'user', content: 'Bonjour', timestamp: '2024-01-01T10:00:00Z' },
-      { role: 'assistant', content: 'Bonjour! Comment puis-je vous aider?', timestamp: '2024-01-01T10:00:01Z' },
+      {
+        role: 'assistant',
+        content: 'Bonjour! Comment puis-je vous aider?',
+        timestamp: '2024-01-01T10:00:01Z',
+      },
     ],
   })
   messages: Array<{
@@ -228,13 +216,9 @@ export class ChatSessionResponseDto {
   })
   updatedAt: string;
 }
-
-/**
- * Réponse de recommandation de produits
- */
 export class ProductRecommendationResponseDto {
   @ApiProperty({
-    description: 'ID de l\'utilisateur',
+    description: "ID de l'utilisateur",
     example: 'user-uuid-123',
   })
   userId: string;
@@ -265,11 +249,21 @@ export class ProductRecommendationResponseDto {
     example: 5,
   })
   totalRecommendations: number;
-}
 
-/**
- * Résultat de l\'analyse de sentiment
- */
+  @ApiPropertyOptional({
+    description: 'Métadonnées de recommandation',
+    example: {
+      basedOnSearches: 3,
+      basedOnPurchases: 5,
+      avgSentiment: 0.75,
+    },
+  })
+  metadata?: {
+    basedOnSearches: number;
+    basedOnPurchases: number;
+    avgSentiment: number;
+  };
+}
 export class SentimentAnalysisResponseDto {
   @ApiProperty({
     description: 'Score de sentiment (-1 à 1)',
@@ -285,7 +279,7 @@ export class SentimentAnalysisResponseDto {
   label: 'positive' | 'neutral' | 'negative';
 
   @ApiProperty({
-    description: 'Confiance de l\'analyse (0-1)',
+    description: "Confiance de l'analyse (0-1)",
     example: 0.88,
   })
   confidence: number;
@@ -304,27 +298,29 @@ export class SentimentAnalysisResponseDto {
   })
   negativeKeywords: string[];
 }
-
-/**
- * Réponse pour la génération SEO
- */
 export class SEOGenerationResponseDto {
   @ApiProperty({
     description: 'Titre SEO optimisé',
-    example: 'Samsung Galaxy S24 Ultra | Smartphone 5G avec Appareil Photo 200MP',
+    example:
+      'Samsung Galaxy S24 Ultra | Smartphone 5G avec Appareil Photo 200MP',
   })
   title: string;
 
   @ApiProperty({
     description: 'Meta description optimisée',
-    example: 'Découvrez le Samsung Galaxy S24 Ultra, le smartphone le plus avancé...',
+    example:
+      'Découvrez le Samsung Galaxy S24 Ultra, le smartphone le plus avancé...',
   })
   metaDescription: string;
 
   @ApiProperty({
     description: 'Mots-clés détectés/suggérés',
     type: [String],
-    example: ['Samsung Galaxy S24 Ultra', 'smartphone 5G', 'appareil photo 200MP'],
+    example: [
+      'Samsung Galaxy S24 Ultra',
+      'smartphone 5G',
+      'appareil photo 200MP',
+    ],
   })
   keywords: string[];
 
@@ -337,7 +333,10 @@ export class SEOGenerationResponseDto {
   @ApiPropertyOptional({
     description: 'Liste de mots-clés à long format',
     type: [String],
-    example: ['meilleur smartphone pour photo 2024', 'Samsung Galaxy S24 Ultra caractéristiques'],
+    example: [
+      'meilleur smartphone pour photo 2024',
+      'Samsung Galaxy S24 Ultra caractéristiques',
+    ],
   })
   longTailKeywords?: string[];
 
@@ -347,10 +346,6 @@ export class SEOGenerationResponseDto {
   })
   htmlContent?: string;
 }
-
-/**
- * Document ajouté à la base de connaissances
- */
 export class KnowledgeDocumentResponseDto {
   @ApiProperty({
     description: 'ID du document',
@@ -360,7 +355,14 @@ export class KnowledgeDocumentResponseDto {
 
   @ApiProperty({
     description: 'Type de document',
-    enum: { PRODUCT: 'PRODUCT', CATEGORY: 'CATEGORY', FAQ: 'FAQ', POLICY: 'POLICY', REVIEW: 'REVIEW', GENERAL: 'GENERAL' },
+    enum: {
+      PRODUCT: 'PRODUCT',
+      CATEGORY: 'CATEGORY',
+      FAQ: 'FAQ',
+      POLICY: 'POLICY',
+      REVIEW: 'REVIEW',
+      GENERAL: 'GENERAL',
+    },
     example: 'PRODUCT',
   })
   documentType: string;
@@ -383,10 +385,6 @@ export class KnowledgeDocumentResponseDto {
   })
   createdAt: string;
 }
-
-/**
- * Statistiques de la base de connaissances
- */
 export class KnowledgeBaseStatsResponseDto {
   @ApiProperty({
     description: 'Nombre total de documents',
@@ -419,26 +417,21 @@ export class KnowledgeBaseStatsResponseDto {
   })
   lastUpdated: string;
 }
-
-/**
- * Réponse générique pour les erreurs AI
- */
 export class AIErrorResponseDto {
   @ApiProperty({
-    description: 'Type d\'erreur',
+    description: "Type d'erreur",
     example: 'VALIDATION_ERROR',
   })
   error: string;
 
   @ApiProperty({
-    description: 'Message d\'erreur',
+    description: "Message d'erreur",
     example: 'Le texte fourni est vide',
   })
   message: string;
 
   @ApiPropertyOptional({
-    description: 'Détails de l\'erreur',
+    description: "Détails de l'erreur",
   })
   details?: Record<string, unknown>;
 }
-

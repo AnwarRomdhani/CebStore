@@ -4,7 +4,11 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -245,7 +249,9 @@ describe('ReviewsService', () => {
       const result = await service.remove(reviewId, userId);
 
       expect(result.message).toBe('Avis supprimé avec succès');
-      expect(prisma.review.delete).toHaveBeenCalledWith({ where: { id: reviewId } });
+      expect(prisma.review.delete).toHaveBeenCalledWith({
+        where: { id: reviewId },
+      });
     });
 
     it('devrait rejeter si utilisateur nest pas propriétaire', async () => {
@@ -309,4 +315,3 @@ describe('ReviewsService', () => {
     });
   });
 });
-

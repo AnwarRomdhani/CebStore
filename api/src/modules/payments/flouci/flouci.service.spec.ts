@@ -148,7 +148,9 @@ describe('FlouciService', () => {
     it('devrait rejeter si commande non trouvée', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.initiatePayment(dto)).rejects.toThrow(NotFoundException);
+      await expect(service.initiatePayment(dto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('devrait rejeter si montant négatif', async () => {
@@ -170,7 +172,9 @@ describe('FlouciService', () => {
         userId: 'user-123',
       });
 
-      httpService.post.mockReturnValue(throwError(() => new Error('API Error')));
+      httpService.post.mockReturnValue(
+        throwError(() => new Error('API Error')),
+      );
 
       await expect(service.initiatePayment(dto)).rejects.toThrow(
         InternalServerErrorException,
@@ -221,7 +225,9 @@ describe('FlouciService', () => {
     it('devrait gérer un paiement non trouvé', async () => {
       mockPrismaService.payment.findFirst.mockResolvedValue(null);
 
-      await expect(service.verifyPayment(dto)).rejects.toThrow(NotFoundException);
+      await expect(service.verifyPayment(dto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -385,4 +391,3 @@ describe('FlouciService', () => {
     });
   });
 });
-

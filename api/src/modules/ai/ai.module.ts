@@ -1,8 +1,3 @@
-/**
- * Module AI RAG
- * @description Module NestJS pour les fonctionnalités dintelligence artificielle
- */
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
@@ -26,4 +21,3 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
   exports: [AiService],
 })
 export class AiModule {}
-

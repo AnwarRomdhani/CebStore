@@ -2,12 +2,7 @@
  * Service pour la gestion de la livraison et des statistiques
  */
 
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -16,7 +11,6 @@ import {
   DeliveryStatus,
   UpdateDeliveryStatusDto,
   DeliveryTrackingResponseDto,
-  TrackingHistoryDto,
 } from './dto/delivery-status.dto';
 import {
   SalesStatsDto,
@@ -24,10 +18,9 @@ import {
   TopProductDto,
   TopCategoryDto,
   RealTimeStatsDto,
-  PeriodStatsDto,
   StatsQueryDto,
 } from './dto/order-stats.dto';
-import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class DeliveryService {
@@ -39,13 +32,16 @@ export class DeliveryService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    this.n8nWebhookUrl = this.configService.get<string>('N8N_ORDER_WEBHOOK') || '';
+    this.n8nWebhookUrl =
+      this.configService.get<string>('N8N_ORDER_WEBHOOK') || '';
   }
 
   /**
    * Mettre à jour le statut de livraison
    */
-  async updateDeliveryStatus(dto: UpdateDeliveryStatusDto): Promise<DeliveryTrackingResponseDto> {
+  async updateDeliveryStatus(
+    dto: UpdateDeliveryStatusDto,
+  ): Promise<DeliveryTrackingResponseDto> {
     try {
       // Vérifier que la commande existe
       const order = await this.prisma.order.findUnique({
@@ -82,7 +78,10 @@ export class DeliveryService {
       let orderStatus = order.status;
       if (dto.status === DeliveryStatus.DELIVERED) {
         orderStatus = OrderStatus.DELIVERED;
-      } else if (dto.status === DeliveryStatus.SHIPPED || dto.status === DeliveryStatus.IN_TRANSIT) {
+      } else if (
+        dto.status === DeliveryStatus.SHIPPED ||
+        dto.status === DeliveryStatus.IN_TRANSIT
+      ) {
         orderStatus = OrderStatus.SHIPPED;
       }
 
@@ -108,7 +107,9 @@ export class DeliveryService {
   /**
    * Obtenir le suivi de livraison d\'une commande
    */
-  async getDeliveryTracking(orderId: string): Promise<DeliveryTrackingResponseDto> {
+  async getDeliveryTracking(
+    orderId: string,
+  ): Promise<DeliveryTrackingResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -161,7 +162,9 @@ export class DeliveryService {
     const latest = latestTracking[0];
 
     // Parser l'adresse de livraison
-    const shippingAddress = this.parseShippingAddress(order.shippingAddress || '');
+    const shippingAddress = this.parseShippingAddress(
+      order.shippingAddress || '',
+    );
 
     return {
       orderId: order.id,
@@ -171,7 +174,8 @@ export class DeliveryService {
       carrier: latest?.carrier || undefined,
       trackingUrl: latest?.tracking_url || undefined,
       shippedAt: latest?.shipped_at?.toISOString() || undefined,
-      estimatedDeliveryDate: latest?.estimated_delivery_date?.toISOString() || undefined,
+      estimatedDeliveryDate:
+        latest?.estimated_delivery_date?.toISOString() || undefined,
       deliveredAt: latest?.delivered_at?.toISOString() || undefined,
       trackingHistory: trackingHistory.map((t) => ({
         id: t.id,
@@ -206,10 +210,10 @@ export class DeliveryService {
       },
       include: {
         orderItems: {
-          include: { 
+          include: {
             product: {
-              include: { category: true }
-            }
+              include: { category: true },
+            },
           },
         },
       },
@@ -222,16 +226,24 @@ export class DeliveryService {
       0,
     );
     const totalProductsSold = orders.reduce(
-      (sum, order) => sum + order.orderItems.reduce((s, item) => s + item.quantity, 0),
+      (sum, order) =>
+        sum + order.orderItems.reduce((s, item) => s + item.quantity, 0),
       0,
     );
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Calculer les revenus par jour
-    const dailyMap = new Map<string, { orders: number; revenue: number; products: number }>();
+    const dailyMap = new Map<
+      string,
+      { orders: number; revenue: number; products: number }
+    >();
     for (const order of orders) {
       const date = order.createdAt.toISOString().split('T')[0];
-      const existing = dailyMap.get(date) || { orders: 0, revenue: 0, products: 0 };
+      const existing = dailyMap.get(date) || {
+        orders: 0,
+        revenue: 0,
+        products: 0,
+      };
       dailyMap.set(date, {
         orders: existing.orders + 1,
         revenue: existing.revenue + Number(order.totalAmount),
@@ -281,7 +293,10 @@ export class DeliveryService {
       .slice(0, 10);
 
     // Catégories les plus vendues
-    const categorySales = new Map<string, { name: string; quantity: number; revenue: number }>();
+    const categorySales = new Map<
+      string,
+      { name: string; quantity: number; revenue: number }
+    >();
     for (const order of orders) {
       for (const item of order.orderItems) {
         const existing = categorySales.get(item.product.categoryId) || {
@@ -336,24 +351,22 @@ export class DeliveryService {
       0,
     );
 
-    const [
-      pendingOrders,
-      inDeliveryOrders,
-      deliveredToday,
-    ] = await Promise.all([
-      this.prisma.order.count({
-        where: { status: OrderStatus.PENDING },
-      }),
-      this.prisma.order.count({
-        where: { status: OrderStatus.SHIPPED },
-      }),
-      this.prisma.order.count({
-        where: {
-          status: OrderStatus.DELIVERED,
-          updatedAt: { gte: today },
-        },
-      }),
-    ]);
+    const [pendingOrders, inDeliveryOrders, deliveredToday] = await Promise.all(
+      [
+        this.prisma.order.count({
+          where: { status: OrderStatus.PENDING },
+        }),
+        this.prisma.order.count({
+          where: { status: OrderStatus.SHIPPED },
+        }),
+        this.prisma.order.count({
+          where: {
+            status: OrderStatus.DELIVERED,
+            updatedAt: { gte: today },
+          },
+        }),
+      ],
+    );
 
     return {
       ordersToday: todayOrders.length,
@@ -361,7 +374,8 @@ export class DeliveryService {
       pendingOrders,
       inDeliveryOrders,
       deliveredToday,
-      averageCartToday: todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0,
+      averageCartToday:
+        todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0,
       conversionRateToday: 4.2, // À calculer
     };
   }
@@ -369,7 +383,9 @@ export class DeliveryService {
   /**
    * Déclencher la notification de livraison via n8n
    */
-  private async triggerDeliveryNotification(dto: UpdateDeliveryStatusDto): Promise<void> {
+  private async triggerDeliveryNotification(
+    dto: UpdateDeliveryStatusDto,
+  ): Promise<void> {
     if (!this.n8nWebhookUrl) {
       return;
     }
@@ -429,4 +445,3 @@ export class DeliveryService {
     };
   }
 }
-

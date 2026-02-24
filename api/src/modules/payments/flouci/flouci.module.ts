@@ -3,13 +3,15 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FlouciController } from './flouci.controller';
 import { FlouciService } from './flouci.service';
+import { FlouciWebhookService } from './flouci.webhook.service';
+import { OrdersModule } from '../../orders/orders.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports: [
     HttpModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       useFactory: (_configService: ConfigService) => ({
         baseURL: 'https://developers.flouci.com/api/v1',
         headers: {
@@ -17,9 +19,12 @@ import { FlouciService } from './flouci.service';
         },
       }),
     }),
+    ConfigModule,
+    PrismaModule,
+    OrdersModule,
   ],
   controllers: [FlouciController],
-  providers: [FlouciService],
-  exports: [FlouciService],
+  providers: [FlouciService, FlouciWebhookService],
+  exports: [FlouciService, FlouciWebhookService],
 })
 export class FlouciModule {}

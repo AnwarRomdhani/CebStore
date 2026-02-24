@@ -9,13 +9,9 @@ import {
   IsPhoneNumber,
   ValidateNested,
   IsEnum,
-  IsNumber,
-  Min,
-  Max,
-  IsArray,
   IsBoolean,
   IsDateString,
-  MaxLength,
+  Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
@@ -85,7 +81,7 @@ export class NotificationPreferencesDto {
  */
 export class ShippingAddressDto {
   @ApiProperty({
-    description: 'Nom de l\'adresse (ex: Domicile, Bureau)',
+    description: "Nom de l'adresse (ex: Domicile, Bureau)",
     example: 'Domicile',
   })
   @IsString()
@@ -120,7 +116,7 @@ export class ShippingAddressDto {
   governorate: string;
 
   @ApiPropertyOptional({
-    description: 'Complément d\'adresse',
+    description: "Complément d'adresse",
     example: '4ème étage, appartement B4',
   })
   @IsOptional()
@@ -129,7 +125,7 @@ export class ShippingAddressDto {
 
   @ApiProperty({
     description: 'Instructions de livraison',
-    example: 'Sonner à l\'interphone B4',
+    example: "Sonner à l'interphone B4",
   })
   @IsString()
   deliveryInstructions?: string;
@@ -160,7 +156,7 @@ export class UpdateUserProfileDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @Length(1, 50)
   firstName?: string;
 
   @ApiPropertyOptional({
@@ -169,7 +165,7 @@ export class UpdateUserProfileDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @Length(1, 50)
   lastName?: string;
 
   @ApiPropertyOptional({
@@ -218,7 +214,7 @@ export class UpdateUserProfileDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @Length(1, 500)
   bio?: string;
 }
 
@@ -260,7 +256,7 @@ export class UserPreferencesDto {
   notifications?: NotificationPreferencesDto;
 
   @ApiPropertyOptional({
-    description: 'Thème de l\'interface',
+    description: "Thème de l'interface",
     enum: { LIGHT: 'LIGHT', DARK: 'DARK', SYSTEM: 'SYSTEM' },
     example: 'SYSTEM',
   })
@@ -274,7 +270,7 @@ export class UserPreferencesDto {
  */
 export class UserAddressDto extends ShippingAddressDto {
   @ApiProperty({
-    description: 'ID de l\'adresse',
+    description: "ID de l'adresse",
     example: 'address-uuid-123',
   })
   id: string;
@@ -297,7 +293,7 @@ export class UserAddressDto extends ShippingAddressDto {
  */
 export class UserProfileResponseDto {
   @ApiProperty({
-    description: 'ID de l\'utilisateur',
+    description: "ID de l'utilisateur",
     example: 'user-uuid-123',
   })
   id: string;
@@ -339,7 +335,7 @@ export class UserProfileResponseDto {
   gender?: Gender;
 
   @ApiPropertyOptional({
-    description: 'URL de l\'avatar',
+    description: "URL de l'avatar",
     example: 'https://example.com/avatar.jpg',
   })
   avatarUrl?: string;
@@ -381,4 +377,3 @@ export class UserProfileResponseDto {
   })
   updatedAt: string;
 }
-

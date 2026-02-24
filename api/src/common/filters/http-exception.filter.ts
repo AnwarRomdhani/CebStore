@@ -1,8 +1,3 @@
-/**
- * HTTP Exception Filter
- * @description Gère les exceptions HTTP de manière centralisée
- */
-
 import {
   ExceptionFilter,
   Catch,
@@ -14,9 +9,6 @@ import {
 import { Response, Request } from 'express';
 import { Prisma } from '@prisma/client';
 
-/**
- * Type pour les erreurs Prisma
- */
 interface PrismaError extends Error {
   code?: string;
   meta?: Record<string, unknown>;
@@ -40,7 +32,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message: string | object;
     let error: string;
 
-    // Déterminer le type d'exception
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
@@ -49,14 +40,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
         error = this.getErrorName(status);
       } else if (typeof exceptionResponse === 'object') {
-        message = (exceptionResponse as { message?: string | string[] }).message || exceptionResponse;
-        error = ((exceptionResponse as { error?: string }).error) || this.getErrorName(status);
+        message =
+          (exceptionResponse as { message?: string | string[] }).message ||
+          exceptionResponse;
+        error =
+          (exceptionResponse as { error?: string }).error ||
+          this.getErrorName(status);
       } else {
         message = exceptionResponse;
         error = this.getErrorName(status);
       }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      // Gérer les erreurs Prisma
       status = HttpStatus.BAD_REQUEST;
       message = this.handlePrismaError(exception as PrismaError);
       error = 'Database Error';
@@ -66,14 +60,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error = 'Validation Error';
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = process.env.NODE_ENV === 'development'
-        ? exception.message
-        : 'Internal server error';
+      message =
+        process.env.NODE_ENV === 'development'
+          ? exception.message
+          : 'Internal server error';
       error = 'Internal Server Error';
 
-      // Log de l'erreur complète en développement
       if (process.env.NODE_ENV === 'development') {
-        this.logger.error(`Unhandled error: ${exception.message}`, exception.stack);
+        this.logger.error(
+          `Unhandled error: ${exception.message}`,
+          exception.stack,
+        );
       }
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -81,7 +78,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error = 'Internal Server Error';
     }
 
-    // Construire la réponse d'erreur
     const errorResponse = {
       success: false,
       statusCode: status,
@@ -95,13 +91,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }),
     };
 
-    // Logger l'erreur
     this.logger.error(
       `[${request.method}] ${request.url} - ${status} - ${JSON.stringify(message)}`,
       exception instanceof Error ? exception.stack : undefined,
     );
 
-    // Envoyer la réponse
     response.status(status).json(errorResponse);
   }
 
@@ -149,7 +143,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       P2011: 'Null constraint violation',
       P2012: 'Missing required value',
       P2013: 'Missing the required argument',
-      P2014: 'The change you are trying to make would violate the required relation',
+      P2014:
+        'The change you are trying to make would violate the required relation',
       P2015: 'A related record could not be found',
       P2016: 'Query interpretation error',
       P2017: 'The records for the relation are not connected',
@@ -160,7 +155,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       P2022: 'The column does not exist in the database',
       P2023: 'Inconsistent column data',
       P2024: 'Timed out fetching a new connection from the pool',
-      P2025: 'An operation failed because it depends on one or more required records',
+      P2025:
+        'An operation failed because it depends on one or more required records',
     };
 
     const defaultMessage = 'A database error occurred';
@@ -184,7 +180,6 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
-    // Vérifier si c'est une erreur de validation
     if (
       status === 400 &&
       typeof exceptionResponse === 'object' &&
@@ -193,7 +188,6 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     ) {
       const messages = exceptionResponse.message;
 
-      // Formater les messages de validation
       let formattedMessages: string[];
 
       if (Array.isArray(messages)) {
@@ -223,8 +217,6 @@ export class ValidationExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    // Si ce n'est pas une erreur de validation, laisser le filter par défaut gérer
     throw exception;
   }
 }
-

@@ -2,7 +2,7 @@ import { IsString, IsNumber, IsNotEmpty, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePaymentDto {
-  @ApiProperty({ example: 100.50, description: 'Payment amount in TND' })
+  @ApiProperty({ example: 100.5, description: 'Payment amount in TND' })
   @IsNumber()
   @IsNotEmpty()
   @Min(0.01)
@@ -13,4 +13,3 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   orderId: string;
 }
-

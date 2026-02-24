@@ -22,7 +22,7 @@ export class DailyRevenueDto {
 
   @ApiProperty({
     description: 'Revenus (TND)',
-    example: 1000.50,
+    example: 1000.5,
   })
   revenue: number;
 
@@ -57,7 +57,7 @@ export class TopProductDto {
 
   @ApiProperty({
     description: 'Revenus générés (TND)',
-    example: 65000.00,
+    example: 65000.0,
   })
   revenue: number;
 
@@ -92,7 +92,7 @@ export class TopCategoryDto {
 
   @ApiProperty({
     description: 'Revenus (TND)',
-    example: 50000.00,
+    example: 50000.0,
   })
   revenue: number;
 }
@@ -115,7 +115,7 @@ export class SalesStatsDto {
 
   @ApiProperty({
     description: 'Revenus totaux (TND)',
-    example: 15000.50,
+    example: 15000.5,
   })
   totalRevenue: number;
 
@@ -127,7 +127,7 @@ export class SalesStatsDto {
 
   @ApiProperty({
     description: 'Panier moyen (TND)',
-    example: 100.00,
+    example: 100.0,
   })
   averageOrderValue: number;
 
@@ -161,14 +161,14 @@ export class SalesStatsDto {
  */
 export class RealTimeStatsDto {
   @ApiProperty({
-    description: 'Commandes aujourd\'hui',
+    description: "Commandes aujourd'hui",
     example: 15,
   })
   ordersToday: number;
 
   @ApiProperty({
-    description: 'Revenus aujourd\'hui (TND)',
-    example: 1500.00,
+    description: "Revenus aujourd'hui (TND)",
+    example: 1500.0,
   })
   revenueToday: number;
 
@@ -185,14 +185,14 @@ export class RealTimeStatsDto {
   inDeliveryOrders: number;
 
   @ApiProperty({
-    description: 'Commandes livrées aujourd\'hui',
+    description: "Commandes livrées aujourd'hui",
     example: 8,
   })
   deliveredToday: number;
 
   @ApiProperty({
-    description: 'Panier moyen aujourd\'hui',
-    example: 100.00,
+    description: "Panier moyen aujourd'hui",
+    example: 100.0,
   })
   averageCartToday: number;
 
@@ -245,25 +245,25 @@ export class PeriodStatsDto {
 
   @ApiProperty({
     description: 'Revenus bruts (TND)',
-    example: 15000.00,
+    example: 15000.0,
   })
   grossRevenue: number;
 
   @ApiProperty({
     description: 'Remises accordées (TND)',
-    example: 500.00,
+    example: 500.0,
   })
   discountsApplied: number;
 
   @ApiProperty({
     description: 'Revenus nets (TND)',
-    example: 14500.00,
+    example: 14500.0,
   })
   netRevenue: number;
 
   @ApiProperty({
     description: 'Revenus moyens par commande (TND)',
-    example: 145.00,
+    example: 145.0,
   })
   averageOrderValue: number;
 
