@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class WishlistItemResponseDto {
-  @ApiProperty({ description: 'ID de l\'élément' })
+  @ApiProperty({ description: 'ID de lélément' })
   id: string;
 
   @ApiProperty({ description: 'ID du produit' })
@@ -13,13 +13,13 @@ export class WishlistItemResponseDto {
   @ApiProperty({ description: 'Prix du produit' })
   price: number;
 
-  @ApiProperty({ description: 'URL de l\'image', required: false })
+  @ApiProperty({ description: 'URL de limage', required: false })
   imageUrl?: string;
 
   @ApiProperty({ description: 'Produit actif' })
   isActive: boolean;
 
-  @ApiProperty({ description: 'Date d\'ajout' })
+  @ApiProperty({ description: 'Date dajout' })
   createdAt: Date;
 }
 
@@ -27,13 +27,16 @@ export class WishlistResponseDto {
   @ApiProperty({ description: 'ID de la wishlist' })
   id: string;
 
-  @ApiProperty({ description: 'ID de l\'utilisateur' })
+  @ApiProperty({ description: 'ID de lutilisateur' })
   userId: string;
 
-  @ApiProperty({ description: 'Nombre d\'éléments' })
+  @ApiProperty({ description: 'Nombre déléments' })
   itemCount: number;
 
-  @ApiProperty({ description: 'Éléments de la wishlist', type: [WishlistItemResponseDto] })
+  @ApiProperty({
+    description: 'Éléments de la wishlist',
+    type: [WishlistItemResponseDto],
+  })
   items: WishlistItemResponseDto[];
 
   @ApiProperty({ description: 'Date de création' })

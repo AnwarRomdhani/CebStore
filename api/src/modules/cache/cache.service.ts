@@ -1,8 +1,3 @@
-/**
- * Service de cache Redis
- * @description Gestion du cache pour améliorer les performances
- */
-
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
@@ -61,9 +56,7 @@ export class CacheService implements OnModuleDestroy {
     });
   }
 
-  /**
-   * Récupérer une valeur du cache
-   */
+  // Récupérer une valeur du cache
   async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.redis.get(key);
@@ -75,9 +68,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Stocker une valeur dans le cache
-   */
+  // Stocker une valeur dans le cache
   async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
     try {
       const ttl = options?.ttl || this.defaultTTL;
@@ -89,9 +80,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Supprimer une valeur du cache
-   */
+  // Supprimer une valeur du cache
   async del(key: string): Promise<void> {
     try {
       await this.redis.del(key);
@@ -101,24 +90,41 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Supprimer plusieurs clés par pattern
-   */
+  // Supprimer plusieurs clés par pattern
   async delByPattern(pattern: string): Promise<void> {
     try {
-      const keys = await this.redis.keys(pattern);
-      if (keys.length > 0) {
-        await this.redis.del(...keys);
-        this.logger.debug(`Cache deleted by pattern [${pattern}]: ${keys.length} keys`);
+      let cursor = '0';
+      let totalDeleted = 0;
+
+      do {
+        const [nextCursor, keys] = await this.redis.scan(
+          cursor,
+          'MATCH',
+          pattern,
+          'COUNT',
+          100,
+        );
+        cursor = nextCursor;
+
+        if (keys.length > 0) {
+          await this.redis.del(...keys);
+          totalDeleted += keys.length;
+        }
+      } while (cursor !== '0');
+
+      if (totalDeleted > 0) {
+        this.logger.debug(
+          `Cache deleted by pattern [${pattern}]: ${totalDeleted} keys`,
+        );
       }
     } catch (error) {
-      this.logger.error(`Erreur suppression cache par pattern [${pattern}]: ${error.message}`);
+      this.logger.error(
+        `Erreur suppression cache par pattern [${pattern}]: ${error.message}`,
+      );
     }
   }
 
-  /**
-   * Vérifier si une clé existe
-   */
+  // Vérifier si une clé existe
   async exists(key: string): Promise<boolean> {
     try {
       const exists = await this.redis.exists(key);
@@ -129,9 +135,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Incrémenter une valeur (pour les compteurs)
-   */
+  // Incrémenter une valeur (pour les compteurs)
   async incr(key: string, ttl?: number): Promise<number> {
     try {
       const value = await this.redis.incr(key);
@@ -145,29 +149,27 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Décémenter une valeur
-   */
+  // Décémenter une valeur
   async decr(key: string): Promise<number> {
     try {
       return await this.redis.decr(key);
     } catch (error) {
-      this.logger.error(`Erreur décrémentation cache [${key}]: ${error.message}`);
+      this.logger.error(
+        `Erreur décrémentation cache [${key}]: ${error.message}`,
+      );
       return 0;
     }
   }
 
-  /**
-   * Récupérer les statistiques du cache
-   */
+  // Récupérer les statistiques du cache
   async getStats(): Promise<{
     connected: boolean;
     keysCount?: number;
     memoryUsage?: number;
   }> {
     try {
-      const [connected, keysCount, memoryInfo] = await Promise.all([
-        this.redis.status === 'ready',
+      const connected = this.redis.status === 'ready';
+      const [keysCount, memoryInfo] = await Promise.all([
         this.redis.dbsize(),
         this.redis.info('memory'),
       ]);
@@ -189,9 +191,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Vider tout le cache
-   */
+  // Vider tout le cache
   async flush(): Promise<void> {
     try {
       await this.redis.flushdb();
@@ -201,9 +201,7 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
-  /**
-   * Nettoyer les connexions à la fermeture du module
-   */
+  // Nettoyer les connexions à la fermeture du module
   onModuleDestroy() {
     this.redis.disconnect();
     this.logger.log('Connexion Redis fermée');

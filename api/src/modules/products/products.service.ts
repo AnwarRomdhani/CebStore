@@ -25,8 +25,12 @@ export class ProductsService {
     private cacheService: CacheService,
     private configService: ConfigService,
   ) {
-    this.cacheEnabled = this.configService.get<string>('REDIS_URL') !== undefined;
-    this.productsTTL = this.configService.get<number>('CACHE_PRODUCTS_TTL', 1800);
+    this.cacheEnabled =
+      this.configService.get<string>('REDIS_URL') !== undefined;
+    this.productsTTL = this.configService.get<number>(
+      'CACHE_PRODUCTS_TTL',
+      1800,
+    );
   }
 
   // Create product
@@ -52,6 +56,10 @@ export class ProductsService {
       },
     });
 
+    if (this.cacheEnabled) {
+      await this.cacheService.delByPattern('products:list:*');
+    }
+
     return this.formatProduct(product);
   }
 
@@ -72,7 +80,15 @@ export class ProductsService {
 
     // Vérifier le cache si activé
     if (this.cacheEnabled) {
-      const cached = await this.cacheService.get<typeof cached>(cacheKey);
+      const cached = await this.cacheService.get<{
+        data: ProductResponseDto[];
+        meta: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
+      }>(cacheKey);
       if (cached) {
         this.logger.debug(`Cache hit: ${cacheKey}`);
         return cached;
@@ -134,7 +150,7 @@ export class ProductsService {
 
     // Vérifier le cache
     if (this.cacheEnabled) {
-      const cached = await this.cacheService.get<typeof cached>(cacheKey);
+      const cached = await this.cacheService.get<ProductResponseDto>(cacheKey);
       if (cached) {
         this.logger.debug(`Cache hit: ${cacheKey}`);
         return cached;
@@ -233,6 +249,13 @@ export class ProductsService {
       },
     });
 
+    if (this.cacheEnabled) {
+      await Promise.all([
+        this.cacheService.del(`product:${id}`),
+        this.cacheService.delByPattern('products:list:*'),
+      ]);
+    }
+
     return this.formatProduct(updatedProduct);
   }
 
@@ -259,6 +282,13 @@ export class ProductsService {
     await this.prisma.product.delete({
       where: { id },
     });
+
+    if (this.cacheEnabled) {
+      await Promise.all([
+        this.cacheService.del(`product:${id}`),
+        this.cacheService.delByPattern('products:list:*'),
+      ]);
+    }
 
     return { message: 'Product deleted successfully' };
   }

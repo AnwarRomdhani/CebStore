@@ -1,8 +1,3 @@
-/**
- * Service de gestion de l'historique des recherches
- * @description Enregistre et analyse les recherches utilisateurs pour les recommandations
- */
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -10,9 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class SearchHistoryService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Enregistrer une recherche
-   */
+  // Enregistrer une recherche
   async logSearch(
     userId: string | null,
     query: string,
@@ -29,9 +22,7 @@ export class SearchHistoryService {
     });
   }
 
-  /**
-   * Obtenir l'historique d'un utilisateur
-   */
+  // Obtenir l'historique d'un utilisateur
   async getUserHistory(userId: string, limit: number = 20) {
     return this.prisma.searchHistory.findMany({
       where: { userId },
@@ -40,10 +31,11 @@ export class SearchHistoryService {
     });
   }
 
-  /**
-   * Obtenir les recherches populaires
-   */
-  async getPopularSearches(limit: number = 10, period: 'day' | 'week' | 'month' = 'week') {
+  // Obtenir les recherches populaires
+  async getPopularSearches(
+    limit: number = 10,
+    period: 'day' | 'week' | 'month' = 'week',
+  ) {
     const startDate = new Date();
 
     if (period === 'day') {
@@ -82,9 +74,7 @@ export class SearchHistoryService {
     }));
   }
 
-  /**
-   * Obtenir les tendances de recherche
-   */
+  // Obtenir les tendances de recherche
   async getSearchTrends(userId?: string) {
     const where: any = {};
     if (userId) {
@@ -113,15 +103,14 @@ export class SearchHistoryService {
       topSearches: topSearches.map((s) => s.query),
       totalSearches,
       searchesWithClicks,
-      clickThroughRate: totalSearches > 0
-        ? Math.round((searchesWithClicks / totalSearches) * 100)
-        : 0,
+      clickThroughRate:
+        totalSearches > 0
+          ? Math.round((searchesWithClicks / totalSearches) * 100)
+          : 0,
     };
   }
 
-  /**
-   * Nettoyer l'historique ancien (> 90 jours)
-   */
+  // Nettoyer l'historique ancien (> 90 jours)
   async cleanupOldHistory(days: number = 90) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);

@@ -1,5 +1,3 @@
-// DTO for category response
-
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CategoryResponseDto {

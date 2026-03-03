@@ -1,5 +1,3 @@
-// DTO for creating a new product
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -24,8 +22,8 @@ export class CreateProductDto {
   name: string;
 
   @ApiProperty({
-    description: 'Prodcut description',
-    example: 'High-quality wireless headphoneswith noise cancellation',
+    description: 'Product description',
+    example: 'High-quality wireless headphones with noise cancellation',
     required: false,
   })
   @IsString()

@@ -20,7 +20,7 @@ export class OrderStatsDto {
   @ApiProperty({ description: 'Commandes annulées', example: 60 })
   cancelledOrders: number;
 
-  @ApiProperty({ description: 'Taux d\'annulation (%)', example: 4.0 })
+  @ApiProperty({ description: 'Taux dannulation (%)', example: 4.0 })
   cancellationRate: number;
 }
 
@@ -34,10 +34,13 @@ export class OrderListItemDto {
   @ApiProperty({ description: 'Nom du client', example: 'Mohamed Ben Ali' })
   customerName: string;
 
-  @ApiProperty({ description: 'Email du client', example: 'client@example.com' })
+  @ApiProperty({
+    description: 'Email du client',
+    example: 'client@example.com',
+  })
   customerEmail: string;
 
-  @ApiProperty({ description: 'Nombre d\'articles', example: 3 })
+  @ApiProperty({ description: 'Nombre darticles', example: 3 })
   itemsCount: number;
 
   @ApiProperty({ description: 'Montant total', example: 250.75 })

@@ -1,8 +1,3 @@
-/**
- * Tests unitaires pour ReviewsService
- * @description Tests pour la validation dachats et la gestion des avis
- */
-
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -21,6 +16,7 @@ const mockPrismaService = {
   },
   review: {
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     create: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
@@ -82,7 +78,7 @@ describe('ReviewsService', () => {
       });
 
       // Mock: pas davis existant
-      prisma.review.findUnique.mockResolvedValue(null);
+      prisma.review.findFirst.mockResolvedValue(null);
 
       // Mock: création de lavis
       prisma.review.create.mockResolvedValue({
@@ -138,7 +134,7 @@ describe('ReviewsService', () => {
         order: { id: 'order-123' },
       });
 
-      prisma.review.findUnique.mockResolvedValue({
+      prisma.review.findFirst.mockResolvedValue({
         id: 'existing-review',
       });
 
@@ -166,7 +162,6 @@ describe('ReviewsService', () => {
         },
       ]);
       prisma.review.count.mockResolvedValue(1);
-      prisma.review.findMany.mockResolvedValueOnce([]);
 
       // Simuler le résumé des notes
       jest.spyOn(service, 'getProductRatingSummary').mockResolvedValue({

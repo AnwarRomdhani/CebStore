@@ -1,15 +1,34 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor() {
+  private readonly logger = new Logger(PrismaService.name);
+  private readonly slowQueryThreshold: number;
+
+  constructor(private configService: ConfigService) {
+    const databaseUrl = configService.get<string>('DATABASE_URL');
+
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+
     const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: databaseUrl,
+      max: 10, // Maximum number of connections in the pool
+      min: 2, // Minimum number of connections in the pool
+      idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+      connectionTimeoutMillis: 5000, // Fail fast if can't connect
     });
 
     super({
@@ -19,33 +38,67 @@ export class PrismaService
           ? ['query', 'error', 'warn']
           : ['error'],
     });
+
+    this.slowQueryThreshold = configService.get<number>(
+      'SLOW_QUERY_THRESHOLD_MS',
+      1000,
+    );
   }
 
   async onModuleInit() {
-    await this.$connect();
-    console.log('Database connected successfully!');
+    try {
+      await this.$connect();
+      this.logger.log('✅ Database connected successfully');
+    } catch (error) {
+      this.logger.error('❌ Failed to connect to database', error);
+      throw error;
+    }
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
-    console.log('Database disconnected!');
+    try {
+      await this.$disconnect();
+      this.logger.log('Database disconnected');
+    } catch (error) {
+      this.logger.error('Error disconnecting from database', error);
+    }
   }
 
-  async cleanDatabase() {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Cannot clean database in production');
+  // Enable explicit transactions with timeout
+  async withTransaction<T>(
+    fn: (
+      tx: Omit<
+        PrismaService,
+        '$connect' | '$disconnect' | '$on' | '$use' | '$extends'
+      >,
+    ) => Promise<T>,
+    timeout = 30000,
+  ): Promise<T> {
+    return this.$transaction(fn, { timeout });
+  }
+
+  // Clean database (development only)
+  async cleanDatabase(): Promise<void> {
+    if (this.configService.get<string>('NODE_ENV') === 'production') {
+      throw new Error('Cannot clean database in production environment');
     }
 
-    const models = Reflect.ownKeys(this).filter(
-      (key) => typeof key === 'string' && !key.startsWith('_'),
-    );
+    // Delete in order respecting foreign key constraints
+    await this.chatFeedback.deleteMany();
+    await this.searchHistory.deleteMany();
+    await this.wishlistItem.deleteMany();
+    await this.wishlist.deleteMany();
+    await this.review.deleteMany();
+    await this.discount.deleteMany();
+    await this.payment.deleteMany();
+    await this.orderItem.deleteMany();
+    await this.order.deleteMany();
+    await this.cartItem.deleteMany();
+    await this.cart.deleteMany();
+    await this.product.deleteMany();
+    await this.category.deleteMany();
+    await this.user.deleteMany();
 
-    return Promise.all(
-      models.map((modelKey) => {
-        if (typeof modelKey === 'string') {
-          return this[modelKey].deleteMany();
-        }
-      }),
-    );
+    this.logger.log('Database cleaned successfully');
   }
 }

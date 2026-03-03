@@ -1,9 +1,4 @@
-/**
- * Valider un numéro de téléphone tunisien
- * @description Les formats acceptés: +216 XX XXX XXX, 216 XX XXX XXX, 0XX XXX XXX
- * @param phone - Numéro de téléphone à valider
- * @returns boolean - true si le numéro est valide
- */
+//Valider un numéro de téléphone tunisien
 export function validateTunisianPhone(phone: string): boolean {
   // Supprimer tous les caractères non numériques
   const cleaned = phone.replace(/\D/g, '');
@@ -23,11 +18,7 @@ export function validateTunisianPhone(phone: string): boolean {
   return false;
 }
 
-/**
- * Formater un numéro de téléphone tunisien au format standard
- * @param phone - Numéro de téléphone à formater
- * @returns string - Numéro formaté en +216 XX XXX XXX
- */
+// Formater un numéro de téléphone tunisien au format standard
 export function formatTunisianPhone(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
 
@@ -43,11 +34,7 @@ export function formatTunisianPhone(phone: string): string {
   return `+216 ${number.slice(0, 2)} ${number.slice(2, 5)} ${number.slice(5)}`;
 }
 
-/**
- * Extraire le numéro sans préfixe
- * @param phone - Numéro de téléphone
- * @returns string - Numéro sans préfixe international
- */
+// Extraire le numéro sans préfixe
 export function extractPhoneNumber(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
 
@@ -62,38 +49,22 @@ export function extractPhoneNumber(phone: string): string {
   return cleaned;
 }
 
-/**
- * Convertir dinars tunisiens en millimes
- * @param tnd - Montant en dinars
- * @returns number - Montant en millimes (entier)
- */
+// Convertir dinars tunisiens en millimes
 export function tndToMillimes(tnd: number): number {
   return Math.round(tnd * 1000);
 }
 
-/**
- * Convertir millimes en dinars tunisiens
- * @param millimes - Montant en millimes
- * @returns number - Montant en dinars
- */
+// Convertir millimes en dinars tunisiens
 export function millimesToTnd(millimes: number): number {
   return millimes / 1000;
 }
 
-/**
- * Formater un montant en dinars tunisiens
- * @param amount - Montant à formater
- * @returns string - Montant formaté avec le symbole DT
- */
+// Formater un montant en dinars tunisiens
 export function formatTND(amount: number): string {
   return `${amount.toFixed(3)} DT`;
 }
 
-/**
- * Valider un montant en dinars tunisiens
- * @param amount - Montant à valider
- * @returns boolean - true si le montant est valide
- */
+// Valider un montant en dinars tunisiens
 export function isValidTNDAmount(amount: number): boolean {
   // Le montant doit être positif et avoir au maximum 3 décimales
   return (
@@ -103,42 +74,26 @@ export function isValidTNDAmount(amount: number): boolean {
   );
 }
 
-/**
- * Valider un code postal tunisien
- * @param code - Code postal à valider
- * @returns boolean - true si le code postal est valide
- */
+// Valider un code postal tunisien
 export function validateTunisianPostalCode(code: string | number): boolean {
   const codeStr = String(code);
   // Les codes postaux tunisiens ont 4 chiffres
   return /^\d{4}$/.test(codeStr);
 }
 
-/**
- * Valider un matricule fiscal tunisien
- * @param matricule - Matricule fiscal à valider
- * @returns boolean - true si le matricule est valide
- */
+// Valider un matricule fiscal tunisien
 export function validateTaxIdentificationNumber(matricule: string): boolean {
   // Le matricule fiscal tunisien a généralement 7-8 chiffres
   return /^\d{7,8}$/.test(matricule.replace(/\s/g, ''));
 }
 
-/**
- * Valider un identifiant fiscal (ICE) tunisien
- * @param ice - ICE à valider
- * @returns boolean - true si l'ICE est valide
- */
+// Valider un identifiant fiscal (ICE) tunisien
 export function validateICE(ice: string): boolean {
   // L'ICE tunisien a 15 chiffres
   return /^\d{15}$/.test(ice.replace(/\s/g, ''));
 }
 
-/**
- * Formater un montant en toutes lettres en français
- * @param amount - Montant en dinars
- * @returns string - Montant en toutes lettres
- */
+// Formater un montant en toutes lettres en français
 export function amountToWords(amount: number): string {
   const dinars = Math.floor(amount);
   const centimes = Math.round((amount - dinars) * 100);
@@ -225,11 +180,7 @@ export function amountToWords(amount: number): string {
   return result;
 }
 
-/**
- * Obtenir le governorat tunisien à partir du code postal
- * @param postalCode - Code postal (4 chiffres)
- * @returns string - Nom du governorat
- */
+// Obtenir le governorat tunisien à partir du code postal
 export function getGovernorateFromPostalCode(postalCode: string): string {
   const code = parseInt(postalCode, 10);
 
@@ -261,9 +212,7 @@ export function getGovernorateFromPostalCode(postalCode: string): string {
   return 'Inconnu';
 }
 
-/**
- * Liste des governorats tunisiens
- */
+// Liste des governorats tunisiens
 export const TUNISIAN_GOVERNORATES = [
   'Tunis',
   'Ariana',
@@ -291,20 +240,14 @@ export const TUNISIAN_GOVERNORATES = [
   'Tataouine',
 ];
 
-/**
- * Préfixes téléphoniques par opérateur en Tunisie
- */
+// Préfixes téléphoniques par opérateur en Tunisie
 export const TUNISIAN_PHONE_PREFIXES = {
   orange: ['50', '51', '52', '53', '54', '55', '56', '57', '58', '59'],
   telecom: ['40', '41', '42', '43', '44', '45', '46', '47', '48', '49'],
   ooredoo: ['20', '21', '22', '23', '24', '25', '26', '27', '28', '29'],
 };
 
-/**
- * Obtenir l'opérateur téléphonique à partir du numéro
- * @param phone - Numéro de téléphone
- * @returns string - Nom de l'opérateur
- */
+// Obtenir l'opérateur téléphonique à partir du numéro
 export function getPhoneOperator(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
 

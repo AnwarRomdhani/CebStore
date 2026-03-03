@@ -1,8 +1,3 @@
-/**
- * Contrôleur de gestion des codes promo
- * @description Expose les endpoints REST pour la gestion des promotions (Admin uniquement)
- */
-
 import {
   Body,
   Controller,
@@ -48,11 +43,7 @@ import { Role } from '@prisma/client';
 export class DiscountsController {
   constructor(private readonly discountsService: DiscountsService) {}
 
-  // ==================== ENDPOINTS ADMIN ====================
-
-  /**
-   * Créer un nouveau code promo (Admin uniquement)
-   */
+  //Créer un nouveau code promo (Admin uniquement)
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -76,9 +67,7 @@ export class DiscountsController {
     return await this.discountsService.create(createDiscountDto);
   }
 
-  /**
-   * Récupérer tous les codes promo (Admin uniquement)
-   */
+  //Récupérer tous les codes promo (Admin uniquement)
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -125,9 +114,7 @@ export class DiscountsController {
     );
   }
 
-  /**
-   * Récupérer les statistiques des codes promo (Admin uniquement)
-   */
+  //Récupérer les statistiques des codes promo (Admin uniquement)
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -143,9 +130,7 @@ export class DiscountsController {
     return await this.discountsService.getStats();
   }
 
-  /**
-   * Récupérer un code promo par ID (Admin uniquement)
-   */
+  //Récupérer un code promo par ID (Admin uniquement)
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -171,9 +156,7 @@ export class DiscountsController {
     return await this.discountsService.findOne(id);
   }
 
-  /**
-   * Mettre à jour un code promo (Admin uniquement)
-   */
+  //Mettre à jour un code promo (Admin uniquement)
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -203,9 +186,7 @@ export class DiscountsController {
     return await this.discountsService.update(id, updateDiscountDto);
   }
 
-  /**
-   * Supprimer un code promo (Admin uniquement)
-   */
+  //Supprimer un code promo (Admin uniquement)
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -231,9 +212,7 @@ export class DiscountsController {
     return await this.discountsService.remove(id);
   }
 
-  /**
-   * Activer un code promo (Admin uniquement)
-   */
+  //Activer un code promo (Admin uniquement)
   @Patch(':id/activate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -255,9 +234,7 @@ export class DiscountsController {
     return await this.discountsService.activate(id);
   }
 
-  /**
-   * Désactiver un code promo (Admin uniquement)
-   */
+  //Désactiver un code promo (Admin uniquement)
   @Patch(':id/deactivate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -279,11 +256,7 @@ export class DiscountsController {
     return await this.discountsService.deactivate(id);
   }
 
-  // ==================== ENDPOINTS PUBLICS ====================
-
-  /**
-   * Valider un code promo (Public)
-   */
+  //Valider un code promo (Public)
   @Post('validate')
   @ApiOperation({
     summary: 'Valider un code promo',
@@ -301,9 +274,7 @@ export class DiscountsController {
     return await this.discountsService.validate(validateDiscountDto);
   }
 
-  /**
-   * Appliquer un code promo (Public)
-   */
+  //Appliquer un code promo (Public)
   @Post('apply')
   @ApiOperation({
     summary: 'Appliquer un code promo',

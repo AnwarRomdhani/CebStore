@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Request } from 'express';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { getRefreshSecret } from 'src/config/auth-secrets';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
@@ -18,22 +19,18 @@ export class RefreshTokenStrategy extends PassportStrategy(
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_REFRESH_SECRET'),
+      secretOrKey: getRefreshSecret(configService),
       passReqToCallback: true,
     });
   }
 
   async validate(req: Request, payload: { sub: string; email: string }) {
-    console.log('RefreshTokenStrategy.validate called');
-    console.log('Payload', { sub: payload.sub, email: payload.email });
-
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      console.log('No authorization header found');
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
       throw new UnauthorizedException('Refresh token not provided');
     }
 
-    const refreshToken = authHeader.replace('Bearer', '').trim();
+    const refreshToken = authHeader.slice(7).trim();
     if (!refreshToken) {
       throw new UnauthorizedException(
         'Refresh token is empty after extraction',
@@ -60,7 +57,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
     );
 
     if (!refreshTokenMatches) {
-      throw new UnauthorizedException('Invalid refresh does not match');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     return { id: user.id, email: user.email, role: user.role };

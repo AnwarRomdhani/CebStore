@@ -9,7 +9,14 @@ import {
   OrderApiResponseDto,
   OrderResponseDto,
 } from './dto/order-response.dto';
-import { Order, OrderItem, OrderStatus, Product, User } from '@prisma/client';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+  Prisma,
+  Product,
+  User,
+} from '@prisma/client';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -24,11 +31,21 @@ export class OrdersService {
   ): Promise<OrderApiResponseDto<OrderResponseDto>> {
     const { items, shippingAddress } = createOrderDto;
 
-    for (const item of items) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: item.productId },
-      });
+    const productIds = [...new Set(items.map((i) => i.productId))];
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        name: true,
+        stock: true,
+        price: true,
+      },
+    });
 
+    const productsById = new Map(products.map((p) => [p.id, p]));
+
+    for (const item of items) {
+      const product = productsById.get(item.productId);
       if (!product) {
         throw new NotFoundException(
           `Product with ID ${item.productId} not found`,
@@ -37,15 +54,15 @@ export class OrdersService {
 
       if (product.stock < item.quantity) {
         throw new BadRequestException(
-          `Insufficient stock for product  ${product.name}.  Available: ${product.stock}, Requested: ${item.quantity}`,
+          `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
         );
       }
     }
 
-    const total = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
+    const total = items.reduce((sum, item) => {
+      const product = productsById.get(item.productId)!;
+      return sum + Number(product.price) * item.quantity;
+    }, 0);
 
     const latestCart = await this.prisma.cart.findFirst({
       where: {
@@ -62,14 +79,14 @@ export class OrdersService {
         data: {
           userId,
           status: OrderStatus.PENDING,
-          totalAmount: total,
+          totalAmount: new Prisma.Decimal(total.toFixed(2)),
           shippingAddress,
           cartId: latestCart?.id,
           orderItems: {
             create: items.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price,
+              price: productsById.get(item.productId)!.price,
             })),
           },
         },

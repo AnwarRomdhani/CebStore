@@ -1,8 +1,3 @@
-/**
- * Module Admin
- * @description Module d'administration centralisée pour la gestion de la plateforme
- */
-
 import { Module } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';

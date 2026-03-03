@@ -1,7 +1,3 @@
-/**
- * Service pour la gestion de la livraison et des statistiques
- */
-
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -36,9 +32,7 @@ export class DeliveryService {
       this.configService.get<string>('N8N_ORDER_WEBHOOK') || '';
   }
 
-  /**
-   * Mettre à jour le statut de livraison
-   */
+  // Mettre à jour le statut de livraison
   async updateDeliveryStatus(
     dto: UpdateDeliveryStatusDto,
   ): Promise<DeliveryTrackingResponseDto> {
@@ -58,18 +52,68 @@ export class DeliveryService {
         throw new NotFoundException(`Commande ${dto.orderId} non trouvée`);
       }
 
+      const now = new Date();
+      const description =
+        dto.notes ||
+        (
+          {
+            PREPARING: 'Commande en préparation',
+            SHIPPED: 'Commande expédiée',
+            IN_TRANSIT: 'Commande en transit',
+            OUT_FOR_DELIVERY: 'Commande en cours de livraison',
+            DELIVERED: 'Commande livrée',
+            DELIVERY_FAILED: 'Échec de livraison',
+            RETURNED: 'Commande retournée',
+          } as const
+        )[dto.status] ||
+        `Statut mis à jour: ${dto.status}`;
+
+      const shippedAt =
+        dto.status === DeliveryStatus.SHIPPED ||
+        dto.status === DeliveryStatus.IN_TRANSIT ||
+        dto.status === DeliveryStatus.OUT_FOR_DELIVERY
+          ? now
+          : null;
+      const deliveredAt = dto.status === DeliveryStatus.DELIVERED ? now : null;
+
       // Créer l'entrée d'historique de suivi
       await this.prisma.$executeRaw`
-        INSERT INTO delivery_tracking (id, order_id, status, tracking_number, carrier, tracking_url, notes, estimated_delivery_date, created_at)
+        INSERT INTO delivery_tracking (
+          id,
+          order_id,
+          status,
+          tracking_number,
+          carrier,
+          tracking_url,
+          notes,
+          photo_url,
+          estimated_delivery_date,
+          shipped_at,
+          delivered_at,
+          description,
+          location,
+          timestamp,
+          created_at
+        )
         VALUES (
-          ${crypto.randomUUID()}::uuid,
-          ${dto.orderId}::uuid,
+          ${crypto.randomUUID()}::text,
+          ${dto.orderId}::text,
           ${dto.status}::text,
           ${dto.trackingNumber || null}::text,
           ${dto.carrier || null}::text,
           ${dto.trackingUrl || null}::text,
           ${dto.notes || null}::text,
-          ${dto.estimatedDeliveryDate ? new Date(dto.estimatedDeliveryDate) : null}::timestamp,
+          ${dto.photoUrl || null}::text,
+          ${
+            dto.estimatedDeliveryDate
+              ? new Date(dto.estimatedDeliveryDate)
+              : null
+          }::timestamptz,
+          ${shippedAt}::timestamptz,
+          ${deliveredAt}::timestamptz,
+          ${description}::text,
+          ${null}::text,
+          ${now}::timestamptz,
           NOW()
         )
       `;
@@ -104,9 +148,7 @@ export class DeliveryService {
     }
   }
 
-  /**
-   * Obtenir le suivi de livraison d\'une commande
-   */
+  // Obtenir le suivi de livraison d\'une commande
   async getDeliveryTracking(
     orderId: string,
   ): Promise<DeliveryTrackingResponseDto> {
@@ -137,7 +179,7 @@ export class DeliveryService {
     >`
       SELECT id, status, description, location, timestamp, notes
       FROM delivery_tracking
-      WHERE order_id = ${orderId}::uuid
+      WHERE order_id = ${orderId}::text
       ORDER BY timestamp DESC
     `;
 
@@ -154,7 +196,7 @@ export class DeliveryService {
     >`
       SELECT tracking_number, carrier, tracking_url, shipped_at, estimated_delivery_date, delivered_at
       FROM delivery_tracking
-      WHERE order_id = ${orderId}::uuid
+      WHERE order_id = ${orderId}::text
       ORDER BY timestamp DESC
       LIMIT 1
     `;
@@ -189,9 +231,7 @@ export class DeliveryService {
     };
   }
 
-  /**
-   * Obtenir les statistiques de ventes
-   */
+  // Obtenir les statistiques de ventes
   async getSalesStats(query: StatsQueryDto): Promise<SalesStatsDto> {
     const startDate = new Date(query.startDate);
     const endDate = new Date(query.endDate);
@@ -333,9 +373,7 @@ export class DeliveryService {
     };
   }
 
-  /**
-   * Obtenir les statistiques en temps réel
-   */
+  // Obtenir les statistiques en temps réel
   async getRealTimeStats(): Promise<RealTimeStatsDto> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -380,9 +418,7 @@ export class DeliveryService {
     };
   }
 
-  /**
-   * Déclencher la notification de livraison via n8n
-   */
+  // Déclencher la notification de livraison via n8n
   private async triggerDeliveryNotification(
     dto: UpdateDeliveryStatusDto,
   ): Promise<void> {
@@ -407,9 +443,7 @@ export class DeliveryService {
     }
   }
 
-  /**
-   * Mapper le statut de commande vers le statut de livraison
-   */
+  // Mapper le statut de commande vers le statut de livraison
   private mapOrderStatusToDeliveryStatus(status: OrderStatus): DeliveryStatus {
     switch (status) {
       case OrderStatus.PENDING:
@@ -427,9 +461,7 @@ export class DeliveryService {
     }
   }
 
-  /**
-   * Parser l\'adresse de livraison
-   */
+  // Parser l\'adresse de livraison
   private parseShippingAddress(address: string): {
     street: string;
     city: string;

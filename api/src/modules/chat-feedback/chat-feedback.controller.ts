@@ -1,18 +1,4 @@
-/**
- * Contrôleur de feedback du Chatbot
- * @description Permet aux utilisateurs de noter les réponses du chatbot
- */
-
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -33,15 +19,13 @@ import { Role } from '@prisma/client';
 export class ChatFeedbackController {
   constructor(private readonly chatFeedbackService: ChatFeedbackService) {}
 
-  /**
-   * Soumettre un feedback (utilisateur)
-   */
+  // Soumettre un feedback (utilisateur)
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Soumettre un feedback',
-    description: 'Notez la qualité d\'une réponse du chatbot',
+    description: 'Notez la qualité dune réponse du chatbot',
   })
   @ApiBody({
     schema: {
@@ -78,9 +62,7 @@ export class ChatFeedbackController {
     );
   }
 
-  /**
-   * Statistiques de satisfaction (admin)
-   */
+  // Statistiques de satisfaction (admin)
   @Get('stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -102,9 +84,7 @@ export class ChatFeedbackController {
     return this.chatFeedbackService.getStats(period || 'week');
   }
 
-  /**
-   * Tendances de satisfaction (admin)
-   */
+  // Tendances de satisfaction (admin)
   @Get('trends')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -120,9 +100,7 @@ export class ChatFeedbackController {
     return this.chatFeedbackService.getSatisfactionTrends();
   }
 
-  /**
-   * Feedbacks récents (admin)
-   */
+  // Feedbacks récents (admin)
   @Get('recent')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -144,9 +122,7 @@ export class ChatFeedbackController {
     return this.chatFeedbackService.getRecentFeedbacks(Number(limit) || 20);
   }
 
-  /**
-   * Commentaires négatifs pour amélioration (admin)
-   */
+  // Commentaires négatifs pour amélioration (admin)
   @Get('improvements')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

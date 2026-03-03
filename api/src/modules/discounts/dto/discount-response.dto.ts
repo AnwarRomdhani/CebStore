@@ -1,8 +1,3 @@
-/**
- * DTO pour la réponse d'un code promo
- * @description Format de données retourné pour les promotions
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DiscountType } from './create-discount.dto';
 
@@ -81,9 +76,7 @@ export class DiscountResponseDto {
   updatedAt: Date;
 }
 
-/**
- * DTO pour le résultat de l'application d'un code promo
- */
+// DTO pour le résultat de l'application d'un code promo
 export class ApplyDiscountResultDto {
   @ApiProperty({
     description: 'Code promo appliqué',
@@ -129,9 +122,7 @@ export class ApplyDiscountResultDto {
   message: string;
 }
 
-/**
- * DTO pour la validation d'un code promo
- */
+// DTO pour la validation d'un code promo
 export class DiscountValidationDto {
   @ApiProperty({
     description: 'Code valide ou non',
@@ -158,9 +149,7 @@ export class DiscountValidationDto {
   discount?: DiscountResponseDto;
 }
 
-/**
- * DTO pour la réponse paginée des codes promo
- */
+// DTO pour la réponse paginée des codes promo
 export class PaginatedDiscountsResponseDto {
   @ApiProperty({
     description: 'Liste des codes promo',

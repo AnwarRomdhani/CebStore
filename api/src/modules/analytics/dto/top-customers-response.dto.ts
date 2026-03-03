@@ -24,7 +24,10 @@ export class CustomerDto {
 }
 
 export class TopCustomersResponseDto {
-  @ApiProperty({ description: 'Liste des meilleurs clients', type: [CustomerDto] })
+  @ApiProperty({
+    description: 'Liste des meilleurs clients',
+    type: [CustomerDto],
+  })
   data: CustomerDto[];
 
   @ApiProperty({ description: 'Nombre total de clients', example: 100 })

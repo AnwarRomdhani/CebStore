@@ -1,8 +1,3 @@
-/**
- * DTO pour l'application d'un code promo
- * @description Valide les données pour appliquer une réduction
- */
-
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNumber, Min } from 'class-validator';
 

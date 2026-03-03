@@ -1,8 +1,3 @@
-/**
- * Tests unitaires pour FlouciService
- * @description Tests pour les wallets de test Flouci (111111=succès, 000000=échec)
- */
-
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -62,6 +57,7 @@ const mockOrdersService = {
 describe('FlouciService', () => {
   let service: FlouciService;
   let httpService: typeof mockHttpService;
+  const userId = 'user-123';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -139,7 +135,7 @@ describe('FlouciService', () => {
         userId: 'user-123',
       });
 
-      const result = await service.initiatePayment(dto);
+      const result = await service.initiatePayment(userId, dto);
 
       expect(result.success).toBe(true);
       expect(result.paymentLink).toContain('flouci.com');
@@ -148,7 +144,7 @@ describe('FlouciService', () => {
     it('devrait rejeter si commande non trouvée', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.initiatePayment(dto)).rejects.toThrow(
+      await expect(service.initiatePayment(userId, dto)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -160,9 +156,15 @@ describe('FlouciService', () => {
         userId: 'user-123',
       });
 
-      await expect(
-        service.initiatePayment({ ...dto, amount: -10 }),
-      ).rejects.toThrow(BadRequestException);
+      mockPrismaService.order.findUnique.mockResolvedValue({
+        id: 'order-123',
+        totalAmount: new Prisma.Decimal(-10),
+        userId,
+      });
+
+      await expect(service.initiatePayment(userId, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('devrait gérer une erreur API', async () => {
@@ -176,7 +178,7 @@ describe('FlouciService', () => {
         throwError(() => new Error('API Error')),
       );
 
-      await expect(service.initiatePayment(dto)).rejects.toThrow(
+      await expect(service.initiatePayment(userId, dto)).rejects.toThrow(
         InternalServerErrorException,
       );
     });
@@ -195,6 +197,7 @@ describe('FlouciService', () => {
         amount: new Prisma.Decimal(150.5),
         currency: 'TND',
         status: 'PENDING',
+        userId,
         order: { id: 'order-123' },
       });
 
@@ -216,7 +219,7 @@ describe('FlouciService', () => {
 
       mockOrdersService.update.mockResolvedValue({ id: 'order-123' });
 
-      const result = await service.verifyPayment(dto);
+      const result = await service.verifyPayment(userId, dto);
 
       expect(result.success).toBe(true);
       expect(result.status).toBe('COMPLETED');
@@ -225,7 +228,7 @@ describe('FlouciService', () => {
     it('devrait gérer un paiement non trouvé', async () => {
       mockPrismaService.payment.findFirst.mockResolvedValue(null);
 
-      await expect(service.verifyPayment(dto)).rejects.toThrow(
+      await expect(service.verifyPayment(userId, dto)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -344,7 +347,18 @@ describe('FlouciService', () => {
         updatedAt: new Date(),
       });
 
-      const result = await service.getPaymentStatus(orderId);
+      mockPrismaService.payment.findFirst.mockResolvedValue({
+        id: 'payment-123',
+        orderId: 'order-123',
+        transactionId: 'flouci-123',
+        amount: new Prisma.Decimal(150.5),
+        currency: 'TND',
+        status: 'COMPLETED',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await service.getPaymentStatus(userId, orderId);
 
       expect(result.status).toBe('COMPLETED');
       expect(result.amount).toBe(150.5);
@@ -353,7 +367,9 @@ describe('FlouciService', () => {
     it('devrait gérer un paiement non trouvé', async () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
-      await expect(service.getPaymentStatus(orderId)).rejects.toThrow(
+      mockPrismaService.payment.findFirst.mockResolvedValue(null);
+
+      await expect(service.getPaymentStatus(userId, orderId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -374,7 +390,7 @@ describe('FlouciService', () => {
         status: 'FAILED',
       });
 
-      const result = await service.cancelPayment(trackingId);
+      const result = await service.cancelPayment(userId, trackingId);
 
       expect(result.message).toContain('annulé');
     });
@@ -385,7 +401,7 @@ describe('FlouciService', () => {
         status: 'COMPLETED',
       });
 
-      await expect(service.cancelPayment(trackingId)).rejects.toThrow(
+      await expect(service.cancelPayment(userId, trackingId)).rejects.toThrow(
         BadRequestException,
       );
     });

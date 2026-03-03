@@ -1,36 +1,18 @@
-/**
- * Utilitaire pour la signature Flouci
- * @description Génération et vérification des signatures HMAC-SHA256
- */
-
 import * as crypto from 'crypto';
 import { Logger } from '@nestjs/common';
 
-/**
- * Logger pour les utilitaires de signature
- */
+// Logger pour les utilitaires de signature
 const logger = new Logger('FlouciSignature');
 
-/**
- * Algorithme de signature
- */
+// Algorithme de signature
 const ALGORITHM = 'sha256';
 
-/**
- * Encoder les données en JSON et buffer
- * @param data - Données à encoder
- * @returns Buffer des données JSON
- */
+// Encoder les données en JSON et buffer
 function encodeData(data: Record<string, unknown>): Buffer {
   return Buffer.from(JSON.stringify(data));
 }
 
-/**
- * Générer une signature HMAC-SHA256
- * @param data - Données à signer
- * @param secretKey - Clé secrète
- * @returns Signature hexadécimale
- */
+// Générer une signature HMAC-SHA256
 export function generateSignature(
   data: Record<string, unknown>,
   secretKey: string,
@@ -48,13 +30,7 @@ export function generateSignature(
   }
 }
 
-/**
- * Vérifier une signature HMAC-SHA256
- * @param data - Données reçues
- * @param signature - Signature à vérifier (hex)
- * @param secretKey - Clé secrète
- * @returns true si la signature est valide
- */
+// Vérifier une signature HMAC-SHA256
 export function verifySignature(
   data: Record<string, unknown>,
   signature: string,
@@ -78,13 +54,7 @@ export function verifySignature(
   }
 }
 
-/**
- * Vérifier la signature du webhook Flouci
- * @param payload - Corps du webhook
- * @param receivedSignature - Signature reçue dans le header
- * @param webhookSecret - Clé secrète du webhook
- * @returns Résultat de la vérification
- */
+// Vérifier la signature du webhook Flouci
 export function verifyFlouciWebhookSignature(
   payload: Record<string, unknown>,
   receivedSignature: string,
@@ -118,15 +88,7 @@ export function verifyFlouciWebhookSignature(
   }
 }
 
-/**
- * Préparer les données de paiement pour la signature
- * @param amount - Montant en millimes
- * @param developerTrackingId - ID de tracking
- * @param successLink - URL de succès
- * @param failLink - URL d'échec
- * @param webhook - URL du webhook
- * @returns Données formatées pour la signature
- */
+// Préparer les données de paiement pour la signature
 export function preparePaymentData(
   amount: number,
   developerTrackingId: string,
@@ -143,16 +105,7 @@ export function preparePaymentData(
   };
 }
 
-/**
- * Générer la signature pour l\'initialisation du paiement
- * @param amount - Montant en millimes
- * @param developerTrackingId - ID de tracking
- * @param successLink - URL de succès
- * @param failLink - URL d'échec
- * @param webhook - URL du webhook
- * @param privateKey - Clé privée Flouci
- * @returns Signature générée
- */
+// Générer la signature pour l\'initialisation du paiement
 export function generatePaymentSignature(
   amount: number,
   developerTrackingId: string,
@@ -171,12 +124,7 @@ export function generatePaymentSignature(
   return generateSignature(data, privateKey);
 }
 
-/**
- * Créer l\'en-tête d\'autorisation pour l\'API Flouci
- * @param publicKey - Clé publique
- * @param signature - Signature générée
- * @returns En-tête d\'autorisation formaté
- */
+// Créer l\'en-tête d\'autorisation pour l\'API Flouci
 export function createAuthorizationHeader(
   publicKey: string,
   signature: string,
@@ -184,11 +132,7 @@ export function createAuthorizationHeader(
   return `Bearer ${publicKey}:${signature}`;
 }
 
-/**
- * Extraire la signature du header de la requête
- * @param authHeader - En-tête Authorization
- * @returns { publicKey, signature }
- */
+// Extraire la signature du header de la requête
 export function parseAuthorizationHeader(
   authHeader: string,
 ): { publicKey: string; signature: string } | null {
@@ -211,12 +155,7 @@ export function parseAuthorizationHeader(
   }
 }
 
-/**
- * Hacher un mot de passe ou une clé secrète avec salt
- * @param secret - Secret à hacher
- * @param salt - Salt optionnel
- * @returns Hash avec salt
- */
+// Hacher un mot de passe ou une clé secrète avec salt
 export function hashWithSalt(
   secret: string,
   salt?: string,
@@ -228,13 +167,7 @@ export function hashWithSalt(
   return { hash, salt: usedSalt };
 }
 
-/**
- * Vérifier un secret hashé
- * @param secret - Secret à vérifier
- * @param hash - Hash à comparer
- * @param salt - Salt utilisé
- * @returns true si le secret correspond
- */
+// Vérifier un secret hashé
 export function verifyHashedSecret(
   secret: string,
   hash: string,
@@ -244,22 +177,14 @@ export function verifyHashedSecret(
   return computedHash === hash;
 }
 
-/**
- * Générer un ID de tracking unique
- * @param orderId - ID de la commande
- * @returns ID de tracking unique
- */
+// Générer un ID de tracking unique
 export function generateTrackingId(orderId: string): string {
   const timestamp = Date.now();
   const random = crypto.randomBytes(8).toString('hex');
   return `${orderId}-${timestamp}-${random}`;
 }
 
-/**
- * Extraire l\'ID de commande depuis le tracking ID
- * @param trackingId - ID de tracking
- * @returns ID de la commande
- */
+// Extraire l\'ID de commande depuis le tracking ID
 export function extractOrderIdFromTrackingId(trackingId: string): string {
   // Format: orderId-timestamp-random
   const parts = trackingId.split('-');
@@ -267,6 +192,5 @@ export function extractOrderIdFromTrackingId(trackingId: string): string {
     throw new Error('Invalid tracking ID format');
   }
   // Les deux premières parties (orderId peut contenir des tirets)
-  // On prend tout sauf les 2 dernières parties (timestamp et random)
   return parts.slice(0, -2).join('-');
 }

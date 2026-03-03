@@ -14,19 +14,16 @@ interface PrismaError extends Error {
   meta?: Record<string, unknown>;
 }
 
+type RequestWithContext = Request & { requestId?: string };
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('Exception');
 
-  /**
-   * Gère toutes les exceptions non capturées
-   * @param exception - Exception levée
-   * @param host - Contexte d'exécution
-   */
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const request = ctx.getRequest<RequestWithContext>();
 
     let status: number;
     let message: string | object;
@@ -51,7 +48,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = this.getErrorName(status);
       }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      status = HttpStatus.BAD_REQUEST;
+      const prismaStatus = this.mapPrismaStatus(exception.code);
+      status = prismaStatus;
       message = this.handlePrismaError(exception as PrismaError);
       error = 'Database Error';
     } else if (exception instanceof Prisma.PrismaClientValidationError) {
@@ -78,11 +76,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error = 'Internal Server Error';
     }
 
+    const requestId =
+      request.requestId || (request.headers['x-request-id'] as string) || '-';
+
     const errorResponse = {
       success: false,
       statusCode: status,
       error,
       message,
+      requestId,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
@@ -92,18 +94,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     this.logger.error(
-      `[${request.method}] ${request.url} - ${status} - ${JSON.stringify(message)}`,
+      `[${request.method}] ${request.url} - ${requestId} - ${status} - ${JSON.stringify(message)}`,
       exception instanceof Error ? exception.stack : undefined,
     );
 
     response.status(status).json(errorResponse);
   }
 
-  /**
-   * Convertit le code HTTP en nom d'erreur
-   * @param status - Code HTTP
-   * @returns Nom de l'erreur
-   */
   private getErrorName(status: number): string {
     const errorNames: Record<number, string> = {
       400: 'Bad Request',
@@ -122,11 +119,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return errorNames[status] || 'Error';
   }
 
-  /**
-   * Gère les erreurs spécifiques à Prisma
-   * @param error - Erreur Prisma
-   * @returns Message d'erreur formaté
-   */
   private handlePrismaError(error: PrismaError): string {
     const errorMessages: Record<string, string> = {
       P2000: 'The value provided is too long for the field',
@@ -162,12 +154,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const defaultMessage = 'A database error occurred';
     return errorMessages[error.code || ''] || defaultMessage;
   }
+
+  private mapPrismaStatus(code?: string): number {
+    if (!code) return HttpStatus.BAD_REQUEST;
+    // https://www.prisma.io/docs/orm/reference/error-reference
+    switch (code) {
+      case 'P2001': // record not found
+      case 'P2025': // depends on required records not found
+        return HttpStatus.NOT_FOUND;
+      case 'P2002': // unique constraint violation
+        return HttpStatus.CONFLICT;
+      case 'P2003': // foreign key constraint
+        return HttpStatus.CONFLICT;
+      default:
+        return HttpStatus.BAD_REQUEST;
+    }
+  }
 }
 
-/**
- * Filter pour les erreurs de validation
- * @description Formate spécifiquement les erreurs de class-validator
- */
 @Catch(HttpException)
 export class ValidationExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger('Validation');

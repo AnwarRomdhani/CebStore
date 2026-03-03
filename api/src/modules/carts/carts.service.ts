@@ -38,9 +38,7 @@ interface DiscountType {
 export class CartsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Obtenir ou créer le panier actif de l'utilisateur
-   */
+  // Obtenir ou créer le panier actif de l'utilisateur
   private async getOrCreateCart(userId: string) {
     let cart = await this.prisma.cart.findFirst({
       where: { userId, checkedOut: false },
@@ -57,9 +55,7 @@ export class CartsService {
     return cart;
   }
 
-  /**
-   * Ajouter un produit au panier
-   */
+  // Ajouter un produit au panier
   async addToCart(userId: string, addToCartDto: AddToCartDto) {
     const { productId, quantity } = addToCartDto;
 
@@ -126,9 +122,7 @@ export class CartsService {
     return this.mapToCartItemDto(cartItemWithProduct);
   }
 
-  /**
-   * Obtenir le panier de l'utilisateur
-   */
+  // Obtenir le panier de l'utilisateur
   async getCart(userId: string): Promise<CartSummary> {
     const cart = await this.getOrCreateCart(userId);
 
@@ -161,9 +155,7 @@ export class CartsService {
     };
   }
 
-  /**
-   * Mettre à jour un item du panier
-   */
+  // Mettre à jour un item du panier
   async updateCartItem(
     userId: string,
     cartItemId: string,
@@ -209,9 +201,7 @@ export class CartsService {
     return this.mapToCartItemDto(updatedItemWithProduct);
   }
 
-  /**
-   * Supprimer un item du panier
-   */
+  // Supprimer un item du panier
   async removeCartItem(userId: string, cartItemId: string): Promise<void> {
     const cartItem = await this.prisma.cartItem.findFirst({
       where: { id: cartItemId, cart: { userId } },
@@ -224,17 +214,13 @@ export class CartsService {
     await this.prisma.cartItem.delete({ where: { id: cartItemId } });
   }
 
-  /**
-   * Vider le panier
-   */
+  // Vider le panier
   async clearCart(userId: string): Promise<void> {
     const cart = await this.getOrCreateCart(userId);
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
   }
 
-  /**
-   * Vider TOUS les items du panier (supprimer les CartItem)
-   */
+  // Vider TOUS les items du panier (supprimer les CartItem)
   async clearCartItems(userId: string): Promise<void> {
     const cart = await this.prisma.cart.findFirst({
       where: { userId, checkedOut: false },
@@ -245,9 +231,7 @@ export class CartsService {
     }
   }
 
-  /**
-   * Valider le panier avant checkout
-   */
+  // Valider le panier avant checkout
   async validateCart(
     userId: string,
     cartId?: string,
@@ -299,9 +283,7 @@ export class CartsService {
     };
   }
 
-  /**
-   * Checkout - Créer une commande à partir du panier
-   */
+  // Checkout - Créer une commande à partir du panier
   async checkout(userId: string, checkoutDto: CheckoutDto) {
     const { cartId, discountCode, shippingAddress, paymentMethod } =
       checkoutDto;
@@ -416,6 +398,23 @@ export class CartsService {
         },
       });
 
+      // Décrémenter les stocks (atomique via condition stock >= quantité)
+      for (const item of cartItems) {
+        const updated = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+          },
+          data: { stock: { decrement: item.quantity } },
+        });
+
+        if (updated.count !== 1) {
+          throw new BadRequestException(
+            `Stock insuffisant pour "${item.product.name}"`,
+          );
+        }
+      }
+
       // Marquer le panier comme checkout
       await tx.cart.update({
         where: { id: cart.id },
@@ -428,9 +427,7 @@ export class CartsService {
     return order;
   }
 
-  /**
-   * Obtenir le nombre d'items dans le panier
-   */
+  // Obtenir le nombre d'items dans le panier
   async getCartItemCount(userId: string): Promise<number> {
     const cart = await this.getOrCreateCart(userId);
 
@@ -442,9 +439,7 @@ export class CartsService {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }
 
-  /**
-   * Mapper CartItem vers CartItemDto
-   */
+  // Mapper CartItem vers CartItemDto
   private mapToCartItemDto(cartItem: CartItemWithProduct): CartItemDto {
     const priceNumber = Number(cartItem.product.price);
     return {
@@ -460,9 +455,7 @@ export class CartsService {
     };
   }
 
-  /**
-   * Calculer la remise
-   */
+  // Calculer la remise
   private calculateDiscount(discount: DiscountType, subtotal: number): number {
     const discountValue = Number(discount.value);
 

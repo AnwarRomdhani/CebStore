@@ -1,37 +1,44 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-const cookieParser = require('cookie-parser');
-const csurf = require('csurf');
+import * as fs from 'fs';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { ConfigService } from '@nestjs/config';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // Project description
+// Configure application-wide settings
+function configureApp(app: INestApplication): void {
+  // Global API prefix
   app.setGlobalPrefix('api/v1');
 
-  // ==================== SÉCURITÉ ====================
+  // Request ID middleware for tracing
+  app.use(requestIdMiddleware);
 
-  // Helmet : Headers de sécurité HTTP
+  // Security headers with Helmet
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://fonts.googleapis.com',
+          ],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
-          frameSrc: ["'none'"], // Protection clickjacking
+          frameSrc: ["'none'"],
         },
       },
       crossOriginEmbedderPolicy: true,
       crossOriginOpenerPolicy: true,
       crossOriginResourcePolicy: { policy: 'same-site' },
       dnsPrefetchControl: { allow: false },
-      frameguard: { action: 'deny' }, // Protection clickjacking
+      frameguard: { action: 'deny' },
       hidePoweredBy: true,
       hsts: {
         maxAge: 31536000,
@@ -47,23 +54,7 @@ async function bootstrap() {
     }),
   );
 
-  // Cookie parser (nécessaire pour CSRF)
-  app.use(cookieParser());
-
-  // Protection CSRF (pour les API stateful)
-  app.use(
-    csurf({
-      cookie: {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production', // HTTPS requis en prod
-      },
-    }),
-  );
-
-  // ==================== VALIDATION ====================
-
-  // Set Global validation
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -75,30 +66,46 @@ async function bootstrap() {
     }),
   );
 
-  // ==================== CORS ====================
+  // Global error handling
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Enable CORS
+  // CORS configuration
+  const configService = app.get(ConfigService);
+  const allowedOrigins = configService
+    .get<string>('ALLOWED_ORIGINS')
+    ?.split(',') ?? ['http://localhost:3000'];
+
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-CSRF-Token'],
-    exposedHeaders: ['X-CSRF-Token'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'x-request-id'],
+    exposedHeaders: ['x-request-id'],
+    maxAge: 86400, // 24 hours
   });
+}
 
-  // Enable Swagger docs
+// Setup Swagger documentation
+function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
-    .setTitle('API Documentation')
-    .setDescription('API documentation for the application')
+    .setTitle('CebStore E-Commerce API')
+    .setDescription('AI-powered e-commerce platform API documentation')
     .setVersion('1.0')
-    .addTag('auth', 'Authentication related endpoints')
+    .addTag('auth', 'Authentication endpoints')
+    .addTag('users', 'User management')
+    .addTag('products', 'Product catalog')
+    .addTag('orders', 'Order management')
+    .addTag('payments', 'Payment processing')
+    .addTag('ai', 'AI features (chatbot, recommendations)')
+    .addTag('admin', 'Admin operations')
     .addBearerAuth(
       {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
+        name: 'Authorization',
+        description: 'Enter JWT access token',
         in: 'header',
       },
       'JWT-auth',
@@ -108,14 +115,14 @@ async function bootstrap() {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        name: 'Refresh-JWT',
-        description: 'Enter refresh JWT token',
+        name: 'Refresh',
+        description: 'Enter JWT refresh token',
         in: 'header',
       },
       'JWT-refresh',
     )
-    .addServer('http://localhost:3001', 'Development server')
-    .addServer('https://api.cebstore.com', 'Production server (HTTPS)')
+    .addServer('http://localhost:3001', 'Development')
+    .addServer('https://api.cebstore.com', 'Production')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -125,34 +132,86 @@ async function bootstrap() {
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
     },
-    customSiteTitle: 'API Documentation',
+    customSiteTitle: 'CebStore API Docs',
     customfavIcon: 'https://nestjs.com/img/logo-small.svg',
     customCss: `
       .swagger-ui .topbar {display: none}
       .swagger-ui .info { margin: 50px 0; }
       .swagger-ui .info .title {color: #4A90E2;}
+      .swagger-ui .scheme-container {background: #fff;}
     `,
   });
-
-  await app.listen(process.env.PORT ?? 3001);
 }
 
-/**
- * Démarrage avec support HTTPS en production
- */
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+
+  configureApp(app);
+  setupSwagger(app);
+
+  // Graceful shutdown
+  const logger = new Logger('Bootstrap');
+  const port = process.env.PORT ?? 3001;
+
+  // Handle shutdown signals
+  const shutdownSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
+  let isShuttingDown = false;
+
+  const shutdown = async (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    logger.log(`${signal} received. Starting graceful shutdown...`);
+
+    try {
+      await app.close();
+      logger.log('Application closed successfully');
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during shutdown', error);
+      process.exit(1);
+    }
+  };
+
+  shutdownSignals.forEach((signal) =>
+    process.on(signal, () => {
+      void shutdown(signal);
+    }),
+  );
+
+  // Handle uncaught errors
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception', error);
+    void shutdown('uncaughtException');
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled Rejection', reason as Error);
+    void shutdown('unhandledRejection');
+  });
+
+  await app.listen(port);
+  logger.log(`🚀 Application is running on port ${port}`);
+  logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+}
+
+// Démarrage avec support HTTPS en production
 async function bootstrapSecure() {
   const httpsEnabled = process.env.HTTPS_ENABLED === 'true';
 
   if (httpsEnabled) {
-    const https = require('https');
-    const fs = require('fs');
-
     const httpsOptions = {
       key: fs.readFileSync(process.env.SSL_KEY_PATH || './ssl/private.key'),
-      cert: fs.readFileSync(process.env.SSL_CERT_PATH || './ssl/certificate.crt'),
+      cert: fs.readFileSync(
+        process.env.SSL_CERT_PATH || './ssl/certificate.crt',
+      ),
     };
 
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+      httpsOptions,
+    });
     // ... (même configuration que bootstrap)
     await app.listen(3001);
     Logger.log(`🔒 Serveur HTTPS démarré sur le port 3001`);
@@ -160,7 +219,9 @@ async function bootstrapSecure() {
     await bootstrap();
     Logger.log(`🚀 Serveur HTTP démarré sur le port 3001`);
     if (process.env.NODE_ENV === 'production') {
-      Logger.warn('⚠️  HTTPS non activé en production ! Configurez HTTPS_ENABLED=true');
+      Logger.warn(
+        '⚠️  HTTPS non activé en production ! Configurez HTTPS_ENABLED=true',
+      );
     }
   }
 }

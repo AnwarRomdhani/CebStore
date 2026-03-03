@@ -14,12 +14,14 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   //   Register api
+  @Public()
   @Post('register')
   @HttpCode(201)
   @ApiOperation({
@@ -100,6 +102,7 @@ export class AuthController {
   }
 
   // Login
+  @Public()
   @Post('login')
   @ApiOperation({
     summary: 'User login',

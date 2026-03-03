@@ -1,7 +1,3 @@
-/**
- * DTO pour le profil utilisateur complet
- */
-
 import {
   IsString,
   IsOptional,
@@ -16,9 +12,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
-/**
- * Genre de l\'utilisateur
- */
+// Genre de l\'utilisateur
 export enum Gender {
   MALE = 'MALE',
   FEMALE = 'FEMALE',
@@ -26,9 +20,7 @@ export enum Gender {
   PREFER_NOT_TO_SAY = 'PREFER_NOT_TO_SAY',
 }
 
-/**
- * Préférences de notification
- */
+// Préférences de notification
 export class NotificationPreferencesDto {
   @ApiPropertyOptional({
     description: 'Recevoir les emails promotionnels',
@@ -76,9 +68,7 @@ export class NotificationPreferencesDto {
   reviewRequests?: boolean;
 }
 
-/**
- * Adresse de livraison
- */
+// Adresse de livraison
 export class ShippingAddressDto {
   @ApiProperty({
     description: "Nom de l'adresse (ex: Domicile, Bureau)",
@@ -146,9 +136,7 @@ export class ShippingAddressDto {
   isDefault: boolean;
 }
 
-/**
- * Mise à jour du profil utilisateur
- */
+// Mise à jour du profil utilisateur
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({
     description: 'Prénom',
@@ -218,9 +206,7 @@ export class UpdateUserProfileDto {
   bio?: string;
 }
 
-/**
- * Préférences utilisateur
- */
+// Préférences utilisateur
 export class UserPreferencesDto {
   @ApiPropertyOptional({
     description: 'Langue préférée',
@@ -265,9 +251,7 @@ export class UserPreferencesDto {
   theme?: 'LIGHT' | 'DARK' | 'SYSTEM';
 }
 
-/**
- * Adresse complète avec ID
- */
+// Adresse complète avec ID
 export class UserAddressDto extends ShippingAddressDto {
   @ApiProperty({
     description: "ID de l'adresse",
@@ -288,9 +272,7 @@ export class UserAddressDto extends ShippingAddressDto {
   updatedAt: string;
 }
 
-/**
- * Réponse du profil complet
- */
+// Réponse du profil complet
 export class UserProfileResponseDto {
   @ApiProperty({
     description: "ID de l'utilisateur",

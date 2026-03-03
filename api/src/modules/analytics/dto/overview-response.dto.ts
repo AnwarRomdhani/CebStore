@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class OverviewResponseDto {
-  @ApiProperty({ description: 'Chiffre d\'affaires total', example: 15000.5 })
+  @ApiProperty({ description: 'Chiffre daffaires total', example: 15000.5 })
   totalRevenue: number;
 
   @ApiProperty({ description: 'Nombre total de commandes', example: 150 })
@@ -19,7 +19,10 @@ export class OverviewResponseDto {
   @ApiProperty({ description: 'Nombre de produits vendus', example: 450 })
   totalProductsSold: number;
 
-  @ApiProperty({ description: 'Taux de conversion (commandes/visiteurs)', example: 3.5 })
+  @ApiProperty({
+    description: 'Taux de conversion (commandes/visiteurs)',
+    example: 3.5,
+  })
   conversionRate?: number;
 
   @ApiProperty({ description: 'Période analysée', example: 'month' })

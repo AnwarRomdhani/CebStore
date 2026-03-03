@@ -1,8 +1,3 @@
-/**
- * Contrôleur d'analytics pour le tableau de bord admin
- * @description Expose les endpoints REST pour les statistiques et KPIs
- */
-
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -36,19 +31,17 @@ import { RevenueByCategoryResponseDto } from './dto/revenue-by-category-response
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  /**
-   * Vue d'ensemble des KPIs
-   */
+  // Vue d'ensemble des KPIs
   @Get('overview')
   @ApiOperation({
-    summary: 'Vue d\'ensemble des KPIs',
+    summary: 'Vue densemble des KPIs',
     description: 'Récupère les indicateurs clés : CA, commandes, clients, etc.',
   })
   @ApiQuery({
     name: 'period',
     required: false,
     enum: ['day', 'week', 'month', 'year'],
-    description: 'Période d\'analyse',
+    description: 'Période danalyse',
     example: 'month',
   })
   @ApiResponse({
@@ -68,9 +61,7 @@ export class AnalyticsController {
     return this.analyticsService.getOverview(query);
   }
 
-  /**
-   * Tendance des ventes
-   */
+  // Tendance des ventes
   @Get('sales-trend')
   @ApiOperation({
     summary: 'Tendance des ventes',
@@ -104,9 +95,7 @@ export class AnalyticsController {
     return this.analyticsService.getSalesTrend(query);
   }
 
-  /**
-   * Produits les plus vendus
-   */
+  // Produits les plus vendus
   @Get('products/bestsellers')
   @ApiOperation({
     summary: 'Produits les plus vendus',
@@ -127,9 +116,7 @@ export class AnalyticsController {
     return this.analyticsService.getBestSellers(query);
   }
 
-  /**
-   * Répartition des commandes par statut
-   */
+  // Répartition des commandes par statut
   @Get('orders/status')
   @ApiOperation({
     summary: 'Répartition des commandes par statut',
@@ -144,9 +131,7 @@ export class AnalyticsController {
     return this.analyticsService.getOrdersByStatus();
   }
 
-  /**
-   * Top clients
-   */
+  // Top clients
   @Get('customers/top')
   @ApiOperation({
     summary: 'Top clients',
@@ -167,12 +152,10 @@ export class AnalyticsController {
     return this.analyticsService.getTopCustomers(query);
   }
 
-  /**
-   * Chiffre d'affaires par catégorie
-   */
+  // Chiffre d'affaires par catégorie
   @Get('revenue/by-category')
   @ApiOperation({
-    summary: 'Chiffre d\'affaires par catégorie',
+    summary: 'Chiffre daffaires par catégorie',
     description: 'Répartition du CA par catégorie de produits',
   })
   @ApiResponse({
@@ -184,9 +167,7 @@ export class AnalyticsController {
     return this.analyticsService.getRevenueByCategory();
   }
 
-  /**
-   * Dashboard complet (tous les KPIs en un seul appel)
-   */
+  // Dashboard complet (tous les KPIs en un seul appel)
   @Get('dashboard')
   @ApiOperation({
     summary: 'Dashboard complet',
@@ -199,19 +180,26 @@ export class AnalyticsController {
       type: 'object',
       properties: {
         overview: { $ref: '#/components/schemas/OverviewResponseDto' },
-        ordersByStatus: { $ref: '#/components/schemas/OrdersByStatusResponseDto' },
+        ordersByStatus: {
+          $ref: '#/components/schemas/OrdersByStatusResponseDto',
+        },
         bestSellers: { $ref: '#/components/schemas/BestSellersResponseDto' },
-        revenueByCategory: { $ref: '#/components/schemas/RevenueByCategoryResponseDto' },
+        revenueByCategory: {
+          $ref: '#/components/schemas/RevenueByCategoryResponseDto',
+        },
       },
     },
   })
-  async getDashboard(@Query('period') period: 'day' | 'week' | 'month' | 'year' = 'month') {
-    const [overview, ordersByStatus, bestSellers, revenueByCategory] = await Promise.all([
-      this.analyticsService.getOverview({ period }),
-      this.analyticsService.getOrdersByStatus(),
-      this.analyticsService.getBestSellers({ limit: 5 }),
-      this.analyticsService.getRevenueByCategory(),
-    ]);
+  async getDashboard(
+    @Query('period') period: 'day' | 'week' | 'month' | 'year' = 'month',
+  ) {
+    const [overview, ordersByStatus, bestSellers, revenueByCategory] =
+      await Promise.all([
+        this.analyticsService.getOverview({ period }),
+        this.analyticsService.getOrdersByStatus(),
+        this.analyticsService.getBestSellers({ limit: 5 }),
+        this.analyticsService.getRevenueByCategory(),
+      ]);
 
     return {
       overview,

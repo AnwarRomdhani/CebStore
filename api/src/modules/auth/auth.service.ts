@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -12,15 +13,26 @@ import { randomBytes } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
+import { parseDurationToSeconds } from 'src/utils/duration.utils';
+import { getJwtSecret, getRefreshSecret } from 'src/config/auth-secrets';
 
 @Injectable()
 export class AuthService {
-  private readonly SALT_ROUNDS = 12;
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
+
+  private get bcryptRounds(): number {
+    const rounds = this.configService.get<number>('BCRYPT_ROUNDS', 12);
+    return Number.isFinite(rounds) ? Number(rounds) : 12;
+  }
+
+  private get refreshSecret(): string {
+    return getRefreshSecret(this.configService);
+  }
 
   //   Register a new user
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -35,7 +47,7 @@ export class AuthService {
     }
 
     try {
-      const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(password, this.bcryptRounds);
       const user = await this.prisma.user.create({
         data: {
           email,
@@ -62,7 +74,7 @@ export class AuthService {
         user,
       };
     } catch (error) {
-      console.error('Error during user registration:', error);
+      this.logger.error('Error during user registration', error as Error);
       throw new InternalServerErrorException(
         'An error occurred during registration',
       );
@@ -76,16 +88,26 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: userId, email };
     const refreshId = randomBytes(16).toString('hex');
+    const jwtSecret = getJwtSecret(this.configService);
+    const refreshSecret = this.refreshSecret;
+    const accessTtl = parseDurationToSeconds(
+      this.configService.get<string>('JWT_EXPIRATION', '15m'),
+      900,
+    );
+    const refreshTtl = parseDurationToSeconds(
+      this.configService.get<string>('REFRESH_EXPIRATION', '7d'),
+      60 * 60 * 24 * 7,
+    );
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        expiresIn: '15m',
-        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: accessTtl,
+        secret: jwtSecret,
       }),
       this.jwtService.signAsync(
         { ...payload, refreshId },
         {
-          expiresIn: '7d',
-          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: refreshTtl,
+          secret: refreshSecret,
         },
       ),
     ]);
@@ -93,14 +115,19 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  private hashRefreshToken(refreshToken: string): Promise<string> {
+    return bcrypt.hash(refreshToken, this.bcryptRounds);
+  }
+
   // Update refresh token in the database
   async updateRefreshToken(
     userId: string,
     refreshToken: string,
   ): Promise<void> {
+    const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refreshToken },
+      data: { refreshToken: hashedRefreshToken },
     });
   }
 

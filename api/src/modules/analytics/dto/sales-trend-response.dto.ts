@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SalesTrendItemDto {
-  @ApiProperty({ description: 'Période (jour/semaine/mois)', example: '2024-01' })
+  @ApiProperty({
+    description: 'Période (jour/semaine/mois)',
+    example: '2024-01',
+  })
   period: string;
 
-  @ApiProperty({ description: 'Chiffre d\'affaires', example: 5000.75 })
+  @ApiProperty({ description: "Chiffre d'affaires", example: 5000.75 })
   revenue: number;
 
   @ApiProperty({ description: 'Nombre de commandes', example: 45 })
@@ -18,7 +21,10 @@ export class SalesTrendItemDto {
 }
 
 export class SalesTrendResponseDto {
-  @ApiProperty({ description: 'Données de tendance', type: [SalesTrendItemDto] })
+  @ApiProperty({
+    description: 'Données de tendance',
+    type: [SalesTrendItemDto],
+  })
   data: SalesTrendItemDto[];
 
   @ApiProperty({ description: 'Période de début' })
@@ -30,7 +36,7 @@ export class SalesTrendResponseDto {
   @ApiProperty({ description: 'Groupement temporel', example: 'day' })
   groupBy: 'day' | 'week' | 'month';
 
-  @ApiProperty({ description: 'Chiffre d\'affaires total', example: 50000.0 })
+  @ApiProperty({ description: 'Chiffre daffaires total', example: 50000.0 })
   totalRevenue: number;
 
   @ApiProperty({ description: 'Nombre total de commandes', example: 450 })

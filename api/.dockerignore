@@ -1,0 +1,59 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output
+dist
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Uploads (will be mounted as volume)
+uploads
+
+# Test coverage
+coverage
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+docs
+*.md
+!package.json
+!package-lock.json
+
+# Git
+.git
+.gitignore
+
+# Prisma (schema is copied, migrations handled separately)
+prisma/migrations
+
+# Test files
+test
+*.spec.ts
+
+# Misc
+.eslintrc.json
+.prettierrc
+eslint.config.mjs
+tsconfig.build.json

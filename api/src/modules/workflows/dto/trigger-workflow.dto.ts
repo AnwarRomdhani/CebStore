@@ -1,8 +1,3 @@
-/**
- * DTO pour le déclenchement des workflows
- * @description Définit les données nécessaires pour déclencher un workflow n8n
- */
-
 import {
   IsString,
   IsEnum,
@@ -14,9 +9,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkflowEventType } from '../workflows.service';
 
-/**
- * DTO pour déclencher un workflow
- */
+// DTO pour déclencher un workflow
 export class TriggerWorkflowDto {
   @ApiProperty({
     description: "Type d'événement du workflow",
@@ -47,9 +40,7 @@ export class TriggerWorkflowDto {
   webhookUrl?: string;
 }
 
-/**
- * Réponse du déclenchement d'un workflow
- */
+// Réponse du déclenchement d'un workflow
 export class WorkflowTriggerResponseDto {
   @ApiProperty({
     description: 'Succès du déclenchement',
@@ -70,9 +61,7 @@ export class WorkflowTriggerResponseDto {
   workflowId?: string;
 }
 
-/**
- * DTO pour la confirmation de commande
- */
+// DTO pour la confirmation de commande
 export class OrderConfirmationDto {
   @ApiProperty({
     description: 'ID de la commande',
@@ -82,9 +71,7 @@ export class OrderConfirmationDto {
   orderId!: string;
 }
 
-/**
- * DTO pour l'alerte de stock faible
- */
+// DTO pour l'alerte de stock faible
 export class LowStockAlertDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -94,9 +81,7 @@ export class LowStockAlertDto {
   productId!: string;
 }
 
-/**
- * DTO pour la notification de panier abandonné
- */
+// DTO pour la notification de panier abandonné
 export class AbandonedCartDto {
   @ApiProperty({
     description: 'ID du panier',
@@ -106,9 +91,7 @@ export class AbandonedCartDto {
   cartId!: string;
 }
 
-/**
- * Statut de santé du service workflows
- */
+// Statut de santé du service workflows
 export class WorkflowHealthDto {
   @ApiProperty({
     description: 'Statut du service',

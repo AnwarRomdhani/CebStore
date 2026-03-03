@@ -1,8 +1,3 @@
-/**
- * Service d'analytics et de statistiques pour le tableau de bord admin
- * @description Fournit les KPIs, tendances de ventes, et rapports analytiques
- */
-
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -15,9 +10,7 @@ import {
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Obtenir une vue d'ensemble des KPIs
-   */
+  // Obtenir une vue d'ensemble des KPIs
   async getOverview(query: OverviewQueryDto) {
     const { period = 'month' } = query;
 
@@ -25,10 +18,8 @@ export class AnalyticsService {
     const { startDate, endDate } = this.getDateRange(period);
 
     // Période précédente pour comparaison
-    const { startDate: prevStartDate, endDate: prevEndDate } = this.getDateRange(
-      period,
-      true,
-    );
+    const { startDate: prevStartDate, endDate: prevEndDate } =
+      this.getDateRange(period, true);
 
     // Récupérer les données de la période actuelle
     const [
@@ -147,9 +138,7 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Obtenir la tendance des ventes
-   */
+  // Obtenir la tendance des ventes
   async getSalesTrend(query: SalesTrendQueryDto) {
     const { groupBy = 'day', startDate: startStr, endDate: endStr } = query;
 
@@ -168,7 +157,9 @@ export class AnalyticsService {
 
     // Valider la plage de dates
     if (endDate < startDate) {
-      throw new BadRequestException('La date de fin doit être après la date de début');
+      throw new BadRequestException(
+        'La date de fin doit être après la date de début',
+      );
     }
 
     // Générer les périodes
@@ -178,37 +169,38 @@ export class AnalyticsService {
       periods.map(async (period) => {
         const { start, end, label } = period;
 
-        const [revenueResult, ordersResult, customersResult] = await Promise.all([
-          this.prisma.order.aggregate({
-            where: {
-              createdAt: {
-                gte: start,
-                lte: end,
+        const [revenueResult, ordersResult, customersResult] =
+          await Promise.all([
+            this.prisma.order.aggregate({
+              where: {
+                createdAt: {
+                  gte: start,
+                  lte: end,
+                },
+                status: {
+                  not: 'CANCELLED',
+                },
               },
-              status: {
-                not: 'CANCELLED',
+              _sum: { totalAmount: true },
+            }),
+            this.prisma.order.count({
+              where: {
+                createdAt: {
+                  gte: start,
+                  lte: end,
+                },
               },
-            },
-            _sum: { totalAmount: true },
-          }),
-          this.prisma.order.count({
-            where: {
-              createdAt: {
-                gte: start,
-                lte: end,
+            }),
+            this.prisma.order.groupBy({
+              by: ['userId'],
+              where: {
+                createdAt: {
+                  gte: start,
+                  lte: end,
+                },
               },
-            },
-          }),
-          this.prisma.order.groupBy({
-            by: ['userId'],
-            where: {
-              createdAt: {
-                gte: start,
-                lte: end,
-              },
-            },
-          }),
-        ]);
+            }),
+          ]);
 
         const revenue = Number(revenueResult._sum.totalAmount) || 0;
         const orders = ordersResult;
@@ -238,9 +230,7 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Obtenir les produits les plus vendus
-   */
+  // Obtenir les produits les plus vendus
   async getBestSellers(query: PaginationDto) {
     const { limit = 10 } = query;
 
@@ -288,9 +278,7 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Obtenir la répartition des commandes par statut
-   */
+  // Obtenir la répartition des commandes par statut
   async getOrdersByStatus() {
     const ordersByStatus = await this.prisma.order.groupBy({
       by: ['status'],
@@ -304,7 +292,8 @@ export class AnalyticsService {
     const data = ordersByStatus.map((item) => ({
       status: item.status,
       count: item._count.id,
-      percentage: total > 0 ? Math.round((item._count.id / total) * 10000) / 100 : 0,
+      percentage:
+        total > 0 ? Math.round((item._count.id / total) * 10000) / 100 : 0,
     }));
 
     return {
@@ -313,9 +302,7 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Obtenir les meilleurs clients
-   */
+  // Obtenir les meilleurs clients
   async getTopCustomers(query: PaginationDto) {
     const { limit = 10 } = query;
 
@@ -368,9 +355,7 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Obtenir le chiffre d'affaires par catégorie
-   */
+  // Obtenir le chiffre d'affaires par catégorie
   async getRevenueByCategory() {
     const categories = await this.prisma.category.findMany({
       select: {
@@ -424,7 +409,10 @@ export class AnalyticsService {
     // Calculer les pourcentages
     const dataWithPercentage = data.map((item) => ({
       ...item,
-      percentage: totalRevenue > 0 ? Math.round((item.revenue / totalRevenue) * 10000) / 100 : 0,
+      percentage:
+        totalRevenue > 0
+          ? Math.round((item.revenue / totalRevenue) * 10000) / 100
+          : 0,
     }));
 
     // Trier par revenu décroissant
@@ -436,15 +424,13 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Helper : Obtenir la plage de dates pour une période
-   */
+  // Helper : Obtenir la plage de dates pour une période
   private getDateRange(
     period: string,
     previous: boolean = false,
   ): { startDate: Date; endDate: Date } {
     const now = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
     let endDate = now;
 
     switch (period) {
@@ -459,10 +445,10 @@ export class AnalyticsService {
         }
         break;
 
-      case 'week':
+      case 'week': {
         const currentDay = now.getDay();
         const diffToMonday = currentDay === 0 ? 6 : currentDay - 1;
-        
+
         if (previous) {
           startDate.setDate(now.getDate() - diffToMonday - 7);
           endDate = new Date(startDate);
@@ -473,13 +459,22 @@ export class AnalyticsService {
           startDate.setHours(0, 0, 0, 0);
         }
         break;
+      }
 
       case 'month':
         if (previous) {
           startDate.setMonth(now.getMonth() - 2);
           startDate.setDate(1);
           startDate.setHours(0, 0, 0, 0);
-          endDate = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+          endDate = new Date(
+            now.getFullYear(),
+            now.getMonth() - 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          );
         } else {
           startDate.setMonth(now.getMonth());
           startDate.setDate(1);
@@ -508,9 +503,7 @@ export class AnalyticsService {
     return { startDate, endDate };
   }
 
-  /**
-   * Helper : Générer les périodes pour la tendance
-   */
+  // Helper : Générer les périodes pour la tendance
   private generatePeriods(
     startDate: Date,
     endDate: Date,
@@ -552,7 +545,15 @@ export class AnalyticsService {
           break;
 
         case 'month':
-          periodEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0, 23, 59, 59, 999);
+          periodEnd = new Date(
+            current.getFullYear(),
+            current.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          );
           if (periodEnd > endDate) {
             periodEnd = endDate;
           }
@@ -570,9 +571,7 @@ export class AnalyticsService {
     return periods;
   }
 
-  /**
-   * Helper : Obtenir le numéro de la semaine
-   */
+  // Helper : Obtenir le numéro de la semaine
   private getWeekNumber(date: Date): number {
     const d = new Date(
       Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),

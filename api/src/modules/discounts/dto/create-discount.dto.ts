@@ -1,8 +1,3 @@
-/**
- * DTO pour la création d'un code promo
- * @description Valide les données entrantes pour la création d'une promotion
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
@@ -16,9 +11,7 @@ import {
   IsPositive,
 } from 'class-validator';
 
-/**
- * Enum pour le type de remise
- */
+// Enum pour le type de remise
 export enum DiscountType {
   PERCENTAGE = 'PERCENTAGE',
   FIXED = 'FIXED',

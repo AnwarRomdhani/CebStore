@@ -1,8 +1,3 @@
-/**
- * Service de feedback du Chatbot
- * @description Collecte les avis utilisateurs pour améliorer les réponses du chatbot
- */
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -10,9 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ChatFeedbackService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Soumettre un feedback
-   */
+  // Soumettre un feedback
   async submitFeedback(
     sessionId: string,
     userId: string | null,
@@ -31,9 +24,7 @@ export class ChatFeedbackService {
     });
   }
 
-  /**
-   * Obtenir les statistiques de feedback
-   */
+  // Obtenir les statistiques de feedback
   async getStats(period: 'day' | 'week' | 'month' = 'week') {
     const startDate = new Date();
 
@@ -76,9 +67,7 @@ export class ChatFeedbackService {
     };
   }
 
-  /**
-   * Obtenir les feedbacks récents
-   */
+  // Obtenir les feedbacks récents
   async getRecentFeedbacks(limit: number = 20) {
     const feedbacks = await this.prisma.chatFeedback.findMany({
       orderBy: { createdAt: 'desc' },
@@ -87,9 +76,7 @@ export class ChatFeedbackService {
     return feedbacks;
   }
 
-  /**
-   * Analyser les tendances de satisfaction
-   */
+  // Analyser les tendances de satisfaction
   async getSatisfactionTrends() {
     const last7Days: Array<{
       date: string;
@@ -132,9 +119,7 @@ export class ChatFeedbackService {
     return last7Days;
   }
 
-  /**
-   * Obtenir les commentaires négatifs pour amélioration
-   */
+  // Obtenir les commentaires négatifs pour amélioration
   async getNegativeFeedbacks(limit: number = 10) {
     return this.prisma.chatFeedback.findMany({
       where: {

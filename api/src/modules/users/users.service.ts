@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -64,7 +68,7 @@ export class UsersService {
         where: { email: updateUserDto.email },
       });
       if (emailTaken) {
-        throw new NotFoundException('Email is already taken');
+        throw new ConflictException('Email is already taken');
       }
     }
 
@@ -107,12 +111,12 @@ export class UsersService {
     );
 
     if (!isPasswordValid) {
-      throw new NotFoundException('Current password is incorrect');
+      throw new ConflictException('Current password is incorrect');
     }
 
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
-      throw new NotFoundException(
+      throw new ConflictException(
         'New password must be different from the current password',
       );
     }

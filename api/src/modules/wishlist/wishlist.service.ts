@@ -1,12 +1,6 @@
-/**
- * Service de gestion des listes de souhaits (Wishlist)
- * @description Permet aux utilisateurs de sauvegarder leurs produits favoris
- */
-
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -16,9 +10,7 @@ import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
 export class WishlistService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Obtenir ou créer la wishlist d'un utilisateur
-   */
+  // Obtenir ou créer la wishlist d'un utilisateur
   private async getOrCreateWishlist(userId: string) {
     let wishlist = await this.prisma.wishlist.findUnique({
       where: { userId },
@@ -65,9 +57,7 @@ export class WishlistService {
     return wishlist;
   }
 
-  /**
-   * Obtenir la wishlist d'un utilisateur
-   */
+  // Obtenir la wishlist d'un utilisateur
   async getWishlist(userId: string) {
     const wishlist = await this.getOrCreateWishlist(userId);
 
@@ -89,9 +79,7 @@ export class WishlistService {
     };
   }
 
-  /**
-   * Ajouter un produit à la wishlist
-   */
+  // Ajouter un produit à la wishlist
   async addItem(userId: string, dto: AddToWishlistDto) {
     const { productId } = dto;
 
@@ -151,9 +139,7 @@ export class WishlistService {
     };
   }
 
-  /**
-   * Retirer un produit de la wishlist
-   */
+  // Retirer un produit de la wishlist
   async removeItem(userId: string, itemId: string) {
     const wishlist = await this.getOrCreateWishlist(userId);
 
@@ -175,9 +161,7 @@ export class WishlistService {
     return { message: 'Produit retiré de la wishlist' };
   }
 
-  /**
-   * Retirer un produit par son ID de produit
-   */
+  // Retirer un produit par son ID de produit
   async removeProduct(userId: string, productId: string) {
     const wishlist = await this.getOrCreateWishlist(userId);
 
@@ -199,9 +183,7 @@ export class WishlistService {
     return { message: 'Produit retiré de la wishlist' };
   }
 
-  /**
-   * Vider la wishlist
-   */
+  // Vider la wishlist
   async clearWishlist(userId: string) {
     const wishlist = await this.getOrCreateWishlist(userId);
 
@@ -212,9 +194,7 @@ export class WishlistService {
     return { message: 'Wishlist vidée' };
   }
 
-  /**
-   * Vérifier si un produit est dans la wishlist
-   */
+  // Vérifier si un produit est dans la wishlist
   async isInWishlist(userId: string, productId: string): Promise<boolean> {
     const wishlist = await this.getOrCreateWishlist(userId);
 

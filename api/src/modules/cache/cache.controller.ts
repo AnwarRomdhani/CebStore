@@ -1,8 +1,3 @@
-/**
- * Contrôleur de gestion du cache
- * @description Endpoints pour administrer le cache Redis
- */
-
 import {
   Controller,
   Get,
@@ -35,9 +30,7 @@ import { Role } from '@prisma/client';
 export class CacheController {
   constructor(private readonly cacheService: CacheService) {}
 
-  /**
-   * Statistiques du cache
-   */
+  // Statistiques du cache
   @Get('stats')
   @ApiOperation({
     summary: 'Statistiques du cache Redis',
@@ -51,9 +44,7 @@ export class CacheController {
     return this.cacheService.getStats();
   }
 
-  /**
-   * Vérifier si une clé existe
-   */
+  // Vérifier si une clé existe
   @Get('exists/:key')
   @ApiOperation({
     summary: 'Vérifier si une clé existe',
@@ -81,9 +72,7 @@ export class CacheController {
     };
   }
 
-  /**
-   * Supprimer une clé du cache
-   */
+  // Supprimer une clé du cache
   @Delete(':key')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -103,10 +92,8 @@ export class CacheController {
     return { message: `Clé "${key}" supprimée du cache` };
   }
 
-  /**
-   * Vider le cache par pattern
-   */
-  @Delete('pattern/*')
+  // Vider le cache par pattern
+  @Delete('pattern/*path')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Vider le cache par pattern',
@@ -126,9 +113,7 @@ export class CacheController {
     return { message: `Clés correspondant à "${pattern}" supprimées` };
   }
 
-  /**
-   * Vider tout le cache
-   */
+  // Vider tout le cache
   @Delete('flush')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -144,9 +129,7 @@ export class CacheController {
     return { message: 'Cache Redis vidé complètement' };
   }
 
-  /**
-   * Liste des clés (pour debug)
-   */
+  // Liste des clés (pour debug)
   @Get('keys')
   @ApiOperation({
     summary: 'Lister les clés du cache',
@@ -164,11 +147,25 @@ export class CacheController {
   })
   async getKeys(@Query('pattern') pattern: string = '*') {
     const redis = (this.cacheService as any).redis;
-    const keys = await redis.keys(pattern);
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      keys.push(...(batch as string[]));
+      if (keys.length >= 100) break;
+    } while (cursor !== '0');
+
     return {
       pattern,
       count: keys.length,
-      keys: keys.slice(0, 100), // Max 100 clés
+      keys: keys.slice(0, 100),
     };
   }
 }

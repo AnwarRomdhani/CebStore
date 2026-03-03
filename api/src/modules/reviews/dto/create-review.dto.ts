@@ -1,8 +1,3 @@
-/**
- * DTO pour la création d'un avis client
- * @description Valide les données entrantes pour la création d'un avis
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 

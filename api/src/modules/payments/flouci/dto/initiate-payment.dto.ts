@@ -1,7 +1,3 @@
-/**
- * DTO pour initier un paiement Flouci
- */
-
 import {
   IsString,
   IsNumber,
@@ -13,9 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Requête pour initier un paiement
- */
+// Requête pour initier un paiement
 export class InitiatePaymentDto {
   @ApiProperty({
     description: 'ID de la commande',
@@ -74,9 +68,7 @@ export class InitiatePaymentDto {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Requête pour vérifier le statut d\'un paiement
- */
+// Requête pour vérifier le statut d\'un paiement
 export class VerifyPaymentDto {
   @ApiProperty({
     description: 'ID de tracking développeur',
@@ -95,9 +87,7 @@ export class VerifyPaymentDto {
   paymentId?: string;
 }
 
-/**
- * Requête pour le webhook Flouci
- */
+// Requête pour le webhook Flouci
 export class FlouciWebhookDto {
   @ApiProperty({
     description: 'ID du paiement',
@@ -154,9 +144,7 @@ export class FlouciWebhookDto {
   signature?: string;
 }
 
-/**
- * Requête pour l\'annulation d\'un paiement
- */
+// Requête pour l\'annulation d\'un paiement
 export class CancelPaymentDto {
   @ApiProperty({
     description: 'ID de tracking développeur',
@@ -175,9 +163,7 @@ export class CancelPaymentDto {
   reason?: string;
 }
 
-/**
- * Requête pour configurer le wallet de test
- */
+// Requête pour configurer le wallet de test
 export class TestWalletPaymentDto {
   @ApiProperty({
     description: 'ID de la commande',

@@ -44,7 +44,10 @@ export class ProductListItemDto {
 }
 
 export class ProductsListResponseDto {
-  @ApiProperty({ description: 'Liste des produits', type: [ProductListItemDto] })
+  @ApiProperty({
+    description: 'Liste des produits',
+    type: [ProductListItemDto],
+  })
   data: ProductListItemDto[];
 
   @ApiProperty({ description: 'Nombre total', example: 250 })
@@ -73,7 +76,7 @@ export class StockAlertDto {
   @ApiProperty({ description: 'Stock actuel', example: 3 })
   currentStock: number;
 
-  @ApiProperty({ description: 'Seuil d\'alerte', example: 10 })
+  @ApiProperty({ description: 'Seuil dalerte', example: 10 })
   alertThreshold: number;
 
   @ApiProperty({ description: 'Statut', enum: ['LOW_STOCK', 'OUT_OF_STOCK'] })
@@ -84,6 +87,6 @@ export class StockAlertsResponseDto {
   @ApiProperty({ description: 'Alertes de stock', type: [StockAlertDto] })
   alerts: StockAlertDto[];
 
-  @ApiProperty({ description: 'Nombre total d\'alertes', example: 7 })
+  @ApiProperty({ description: 'Nombre total dalertes', example: 7 })
   total: number;
 }

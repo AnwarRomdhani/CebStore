@@ -1,5 +1,3 @@
-// DTO
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 

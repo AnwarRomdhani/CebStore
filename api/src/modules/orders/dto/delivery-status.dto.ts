@@ -1,7 +1,3 @@
-/**
- * DTO pour la gestion du statut de livraison
- */
-
 import {
   IsString,
   IsNotEmpty,
@@ -11,9 +7,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Statut de livraison
- */
+// Statut de livraison
 export enum DeliveryStatus {
   PREPARING = 'PREPARING',
   SHIPPED = 'SHIPPED',
@@ -24,9 +18,7 @@ export enum DeliveryStatus {
   RETURNED = 'RETURNED',
 }
 
-/**
- * Mise à jour du statut de livraison
- */
+// Mise à jour du statut de livraison
 export class UpdateDeliveryStatusDto {
   @ApiProperty({
     description: 'ID de la commande',
@@ -93,9 +85,7 @@ export class UpdateDeliveryStatusDto {
   photoUrl?: string;
 }
 
-/**
- * Historique de suivi de livraison
- */
+// Historique de suivi de livraison
 export class TrackingHistoryDto {
   @ApiProperty({
     description: "ID de l'historique",
@@ -133,9 +123,7 @@ export class TrackingHistoryDto {
   notes?: string;
 }
 
-/**
- * Réponse du suivi de livraison
- */
+// Réponse du suivi de livraison
 export class DeliveryTrackingResponseDto {
   @ApiProperty({
     description: 'ID de la commande',
@@ -209,9 +197,7 @@ export class DeliveryTrackingResponseDto {
   };
 }
 
-/**
- * Configuration du transporteur
- */
+// Configuration du transporteur
 export class CarrierConfigDto {
   @ApiProperty({
     description: 'Nom du transporteur',
@@ -258,9 +244,7 @@ export class CarrierConfigDto {
   isActive: boolean;
 }
 
-/**
- * Notification de livraison
- */
+// Notification de livraison
 export class DeliveryNotificationDto {
   @ApiProperty({
     description: 'ID de la commande',

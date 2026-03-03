@@ -1,98 +1,302 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# CebStore E-Commerce API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Modern AI-powered e-commerce REST API built with NestJS, PostgreSQL, Prisma, and Redis.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+- **Authentication & Authorization**: JWT-based auth with refresh tokens, role-based access control
+- **Product Management**: Full CRUD operations with categories, stock tracking, and search
+- **Shopping Cart**: Real-time cart management with stock validation
+- **Order Processing**: Complete order lifecycle with status tracking
+- **Payment Integration**: Flouci payment gateway with webhooks
+- **AI Features**: 
+  - Intelligent chatbot with RAG (Retrieval-Augmented Generation)
+  - Product recommendations based on user behavior
+  - Semantic search with vector embeddings
+  - Sentiment analysis for reviews
+- **Caching**: Redis-based caching for improved performance
+- **Rate Limiting**: Configurable rate limiting to prevent abuse
+- **Health Checks**: Comprehensive health monitoring endpoints
+- **API Documentation**: Auto-generated Swagger/OpenAPI docs
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📁 Project Structure
 
-## Project setup
-
-```bash
-$ npm install
+```
+api/
+├── src/
+│   ├── common/              # Shared utilities, guards, decorators, filters
+│   │   ├── decorators/      # Custom decorators (@Public, @Roles, @GetUser)
+│   │   ├── dto/             # Common DTOs (pagination, responses)
+│   │   ├── filters/         # Exception filters
+│   │   ├── guards/          # Auth guards (JWT, Roles)
+│   │   ├── interceptors/    # Request/response interceptors
+│   │   ├── middleware/      # Custom middleware (request-id)
+│   │   ├── pipes/           # Validation pipes
+│   │   └── repositories/    # Base repository pattern
+│   ├── config/              # Configuration modules
+│   ├── modules/             # Feature modules
+│   │   ├── auth/            # Authentication & authorization
+│   │   ├── users/           # User management
+│   │   ├── products/        # Product catalog
+│   │   ├── categories/      # Category management
+│   │   ├── carts/           # Shopping cart
+│   │   ├── orders/          # Order processing
+│   │   ├── payments/        # Payment integration
+│   │   ├── reviews/         # Product reviews
+│   │   ├── discounts/       # Discount codes
+│   │   ├── ai/              # AI features (chatbot, recommendations)
+│   │   ├── analytics/       # Analytics & reporting
+│   │   ├── admin/           # Admin dashboard APIs
+│   │   ├── cache/           # Redis caching
+│   │   ├── health/          # Health check endpoints
+│   │   └── ...
+│   ├── prisma/              # Prisma ORM service
+│   ├── utils/               # Utility functions
+│   ├── app.module.ts        # Root module
+│   ├── app.controller.ts    # Root controller
+│   ├── app.service.ts       # Root service
+│   └── main.ts              # Application entry point
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   └── migrations/          # Database migrations
+├── test/                    # E2E tests
+├── .env.example             # Environment variables template
+├── package.json
+└── tsconfig.json
 ```
 
-## Compile and run the project
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | NestJS 11 |
+| **Language** | TypeScript 5 |
+| **Database** | PostgreSQL 15+ |
+| **ORM** | Prisma 5 |
+| **Cache** | Redis |
+| **Authentication** | JWT (passport-jwt) |
+| **Validation** | class-validator, class-transformer |
+| **Documentation** | Swagger/OpenAPI |
+| **AI** | OpenAI API |
+| **Payment** | Flouci |
+| **Testing** | Jest, Supertest |
+
+## 📦 Installation
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 15+
+- Redis (optional, for caching)
+- npm or yarn
+
+### Setup
 
 ```bash
-# development
-$ npm run start
+# Install dependencies
+npm install
 
-# watch mode
-$ npm run start:dev
+# Copy environment file
+cp .env.example .env
 
-# production mode
-$ npm run start:prod
+# Edit .env with your configuration
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate deploy
+
+# (Development) Run migrations and seed database
+npx prisma migrate dev
+npx prisma db seed
+
+# Start development server
+npm run start:dev
 ```
 
-## Run tests
+## 🔧 Configuration
+
+See `.env.example` for all available configuration options.
+
+### Key Environment Variables
 
 ```bash
-# unit tests
-$ npm run test
+# Server
+NODE_ENV=development
+PORT=3001
 
-# e2e tests
-$ npm run test:e2e
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/cebstore
 
-# test coverage
-$ npm run test:cov
+# JWT Secrets (generate strong random strings!)
+JWT_SECRET=your-secret-minimum-32-characters
+REFRESH_SECRET=your-refresh-secret-minimum-32-characters
+
+# Redis (optional)
+REDIS_URL=redis://localhost:6379
+
+# OpenAI (for AI features)
+OPENAI_API_KEY=sk-...
+
+# Payment (Flouci)
+FLOUCI_APP_PUBLIC=your-public-key
+FLOUCI_APP_SECRET=your-secret-key
+FLOUCI_SANDBOX=true
 ```
 
-## Deployment
+## 📚 API Documentation
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Once the server is running, access the interactive API documentation at:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Swagger UI**: http://localhost:3001/api/docs
+- **OpenAPI JSON**: http://localhost:3001/api/docs-json
+
+## 🔑 API Endpoints
+
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/register` | Register new user |
+| POST | `/api/v1/auth/login` | Login |
+| POST | `/api/v1/auth/logout` | Logout (requires auth) |
+| POST | `/api/v1/auth/refresh` | Refresh token (requires refresh token) |
+
+### Products
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/products` | List products (paginated) |
+| GET | `/api/v1/products/:id` | Get product by ID |
+| POST | `/api/v1/products` | Create product (admin) |
+| PUT | `/api/v1/products/:id` | Update product (admin) |
+| DELETE | `/api/v1/products/:id` | Delete product (admin) |
+
+### Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/orders` | List user orders |
+| GET | `/api/v1/orders/:id` | Get order details |
+| POST | `/api/v1/orders` | Create order |
+| PUT | `/api/v1/orders/:id` | Update order |
+| POST | `/api/v1/orders/:id/cancel` | Cancel order |
+
+### Admin
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/dashboard` | Admin dashboard data |
+| GET | `/api/v1/admin/users` | List all users |
+| GET | `/api/v1/admin/products` | List all products |
+| GET | `/api/v1/admin/orders` | List all orders |
+| POST | `/api/v1/admin/users/:id/ban` | Ban user |
+
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/health` | Basic health check |
+| GET | `/api/v1/health/detailed` | Detailed health status |
+| GET | `/api/v1/health/ready` | Kubernetes readiness probe |
+| GET | `/api/v1/health/live` | Kubernetes liveness probe |
+
+## 🧪 Testing
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Unit tests
+npm run test
+
+# Test with coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+
+# Watch mode
+npm run test:watch
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📈 Performance Optimization
 
-## Resources
+The API includes several performance optimizations:
 
-Check out a few resources that may come in handy when working with NestJS:
+1. **Redis Caching**: Frequently accessed data (products, categories) is cached
+2. **Database Indexing**: Strategic indexes on frequently queried columns
+3. **Query Optimization**: Efficient Prisma queries with proper includes
+4. **Rate Limiting**: Prevents abuse and ensures fair usage
+5. **Connection Pooling**: Optimized database connection management
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🔒 Security Features
 
-## Support
+- **JWT Authentication**: Secure token-based authentication
+- **Password Hashing**: bcrypt with configurable rounds
+- **Rate Limiting**: Configurable request throttling
+- **Helmet Headers**: Security HTTP headers
+- **CORS**: Configurable cross-origin resource sharing
+- **Input Validation**: Comprehensive DTO validation
+- **SQL Injection Protection**: Prisma ORM parameterized queries
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🤖 AI Features
 
-## Stay in touch
+### Chatbot
+- Contextual conversations using RAG
+- Product recommendations during chat
+- Sentiment-aware responses
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Recommendations
+- Personalized product suggestions
+- Based on purchase history and browsing behavior
+- Semantic similarity matching
 
-## License
+### Semantic Search
+- Vector-based product search
+- Natural language queries
+- Relevance scoring
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📝 Development Guidelines
+
+### Code Style
+- Follow ESLint configuration
+- Use Prettier for formatting
+- Write meaningful commit messages
+
+### Commit Convention
+```
+feat: Add new feature
+fix: Fix bug
+docs: Update documentation
+style: Format code
+refactor: Refactor code
+test: Add tests
+chore: Update dependencies
+```
+
+## 🚀 Deployment
+
+### Production Build
+
+```bash
+# Build
+npm run build
+
+# Run production server
+npm run start:prod
+```
+
+### Docker (Optional)
+
+```bash
+# Build image
+docker build -t cebstore-api .
+
+# Run container
+docker run -p 3001:3001 --env-file .env cebstore-api
+```
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 👥 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check existing documentation
+- Contact: support@cebstore.com

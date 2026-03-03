@@ -1,19 +1,15 @@
-/**
- * Module de conformité RGPD (GDPR)
- * @description Gestion des données personnelles et droit à l'oubli
- */
-
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GdprService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Exporter toutes les données personnelles d'un utilisateur
-   * Conformité RGPD - Article 15 (Droit d'accès)
-   */
+  // Exporter toutes les données personnelles d'un utilisateur
   async exportPersonalData(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -39,7 +35,11 @@ export class GdprService {
     }
 
     // Supprimer les données sensibles
-    const { password, refreshToken, ...safeUser } = user;
+    const {
+      password: _password,
+      refreshToken: _refreshToken,
+      ...safeUser
+    } = user;
 
     return {
       data: {
@@ -58,10 +58,7 @@ export class GdprService {
     };
   }
 
-  /**
-   * Supprimer un compte utilisateur (droit à l'oubli)
-   * Conformité RGPD - Article 17
-   */
+  // Supprimer un compte utilisateur (droit à l'oubli)
   async deleteAccount(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -82,7 +79,7 @@ export class GdprService {
     });
 
     if (pendingOrders > 0) {
-      throw new Error(
+      throw new BadRequestException(
         `Impossible de supprimer le compte : ${pendingOrders} commande(s) en cours`,
       );
     }
@@ -127,10 +124,7 @@ export class GdprService {
     };
   }
 
-  /**
-   * Modifier les données personnelles
-   * Conformité RGPD - Article 16 (Droit de rectification)
-   */
+  // Modifier les données personnelles
   async updatePersonalData(
     userId: string,
     data: {
@@ -164,9 +158,7 @@ export class GdprService {
     });
   }
 
-  /**
-   * Obtenir le résumé des données stockées
-   */
+  // Obtenir le résumé des données stockées
   async getDataSummary(userId: string) {
     const [user, ordersCount, reviewsCount, cartsCount, paymentsCount] =
       await Promise.all([

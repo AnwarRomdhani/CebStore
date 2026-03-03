@@ -1,5 +1,3 @@
-// DTO for creating a new category
-
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,

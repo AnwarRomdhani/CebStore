@@ -1,8 +1,3 @@
-/**
- * Module des workflows n8n
- * @description Gère le déclenchement des workflows n8n pour les notifications automatisées
- */
-
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { WorkflowsService } from './workflows.service';

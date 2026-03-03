@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { getJwtSecret } from 'src/config/auth-secrets';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,7 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: getJwtSecret(configService),
     });
   }
   async validate(payload: { sub: string; email: string }) {
@@ -25,6 +26,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         firstName: true,
         lastName: true,
         role: true,
+        isActive: true,
+        bannedAt: true,
         createdAt: true,
         updatedAt: true,
         password: false,
@@ -34,6 +37,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+
+    // Check if user is banned/inactive
+    if (user.isActive === false) {
+      throw new UnauthorizedException(
+        'Your account has been disabled. Please contact support.',
+      );
+    }
+
     return user;
   }
 }

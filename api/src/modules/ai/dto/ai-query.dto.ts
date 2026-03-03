@@ -164,13 +164,13 @@ export class CreateChatSessionDto {
   metadata?: Record<string, unknown>;
 }
 export class RecommendationConfigDto {
-  @ApiProperty({
-    description: "ID de l'utilisateur",
+  @ApiPropertyOptional({
+    description: "ID de l'utilisateur (injecté depuis le token si authentifié)",
     example: 'user-uuid-123',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  userId: string;
+  userId?: string;
 
   @ApiPropertyOptional({
     description: 'Nombre de recommandations',

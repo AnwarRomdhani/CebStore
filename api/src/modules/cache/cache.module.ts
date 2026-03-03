@@ -1,8 +1,3 @@
-/**
- * Module Cache Redis
- * @description Module de gestion du cache pour améliorer les performances
- */
-
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheService } from './cache.service';
@@ -15,7 +10,7 @@ import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
   imports: [
     NestCacheModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         store: redisStore,
         url: configService.get<string>('REDIS_URL'),
         host: configService.get<string>('REDIS_HOST', 'localhost'),

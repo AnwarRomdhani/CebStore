@@ -1,5 +1,3 @@
-// DTO for creating order
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -24,7 +22,9 @@ class OrderItemDto {
 
   @ApiProperty({
     example: 49.99,
+    required: false,
   })
+  @IsOptional()
   @IsNumber(
     {
       maxDecimalPlaces: 2,
@@ -32,7 +32,7 @@ class OrderItemDto {
     { message: 'Price must be a valid number (e.g., 49.99)' },
   )
   @Type(() => Number)
-  price: number;
+  price?: number;
 }
 export class CreateOrderDto {
   @ApiProperty({ type: [OrderItemDto] })

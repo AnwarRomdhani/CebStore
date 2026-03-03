@@ -1,12 +1,6 @@
-/**
- * DTO pour les statistiques de ventes
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Revenus par jour
- */
+// Revenus par jour
 export class DailyRevenueDto {
   @ApiProperty({
     description: 'Date',
@@ -33,9 +27,7 @@ export class DailyRevenueDto {
   productsSold: number;
 }
 
-/**
- * Produit le plus vendu
- */
+// Produit le plus vendu
 export class TopProductDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -68,9 +60,7 @@ export class TopProductDto {
   imageUrl?: string;
 }
 
-/**
- * Catégorie la plus vendus
- */
+// Catégorie la plus vendus
 export class TopCategoryDto {
   @ApiProperty({
     description: 'ID de la catégorie',
@@ -97,9 +87,7 @@ export class TopCategoryDto {
   revenue: number;
 }
 
-/**
- * Statistiques de ventes agrégées
- */
+// Statistiques de ventes agrégées
 export class SalesStatsDto {
   @ApiProperty({
     description: 'Période des statistiques',
@@ -156,9 +144,7 @@ export class SalesStatsDto {
   topCategories: TopCategoryDto[];
 }
 
-/**
- * Statistiques en temps réel
- */
+// Statistiques en temps réel
 export class RealTimeStatsDto {
   @ApiProperty({
     description: "Commandes aujourd'hui",
@@ -203,9 +189,7 @@ export class RealTimeStatsDto {
   conversionRateToday: number;
 }
 
-/**
- * Statistiques par période
- */
+// Statistiques par période
 export class PeriodStatsDto {
   @ApiProperty({
     description: 'Date de début',
@@ -274,9 +258,7 @@ export class PeriodStatsDto {
   topProducts: TopProductDto[];
 }
 
-/**
- * Paramètres pour les statistiques
- */
+// Paramètres pour les statistiques
 export class StatsQueryDto {
   @ApiProperty({
     description: 'Date de début',

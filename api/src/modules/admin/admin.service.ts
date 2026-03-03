@@ -1,9 +1,8 @@
-/**
- * Service d'administration centralisée
- * @description Fournit les fonctionnalités de gestion pour le tableau de bord admin
- */
-
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Role, OrderStatus } from '@prisma/client';
 
@@ -11,9 +10,7 @@ import { Role, OrderStatus } from '@prisma/client';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Obtenir le dashboard complet
-   */
+  //Obtenir le dashboard complet
   async getDashboard() {
     // Résumé des KPIs
     const [
@@ -108,7 +105,9 @@ export class AdminService {
       recentOrders: recentOrders.map((order) => ({
         id: order.id,
         orderNumber: order.orderNumber,
-        customerName: `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || order.user.email,
+        customerName:
+          `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() ||
+          order.user.email,
         customerEmail: order.user.email,
         totalAmount: Number(order.totalAmount),
         status: order.status,
@@ -119,9 +118,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Statistiques des utilisateurs
-   */
+  // Statistiques des utilisateurs
   async getUserStats() {
     const [total, newToday, newThisWeek, newThisMonth] = await Promise.all([
       this.prisma.user.count(),
@@ -156,9 +153,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Liste des utilisateurs avec pagination et filtres
-   */
+  // Liste des utilisateurs avec pagination et filtres
   async getUsers(params: {
     page: number;
     limit: number;
@@ -223,10 +218,8 @@ export class AdminService {
     };
   }
 
-  /**
-   * Bannir un utilisateur
-   */
-  async banUser(userId: string) {
+  // Bannir un utilisateur
+  async banUser(userId: string, reason?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
@@ -237,20 +230,26 @@ export class AdminService {
       throw new BadRequestException('Impossible de bannir un administrateur');
     }
 
-    // Soft delete : désactiver le compte
+    // Désactiver le compte et enregistrer la date/raison du bannissement
     return this.prisma.user.update({
       where: { id: userId },
       data: {
-        // On pourrait ajouter un champ isActive ou deletedAt
-        // Pour l'instant, on supprime le refreshToken pour empêcher la connexion
-        refreshToken: null,
+        isActive: false,
+        bannedAt: new Date(),
+        bannedReason: reason || 'Non spécifié',
+        refreshToken: null, // Invalider les sessions existantes
+      },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        bannedAt: true,
+        bannedReason: true,
       },
     });
   }
 
-  /**
-   * Statistiques des produits
-   */
+  // Statistiques des produits
   async getProductStats() {
     const [total, active, inactive, products] = await Promise.all([
       this.prisma.product.count(),
@@ -277,9 +276,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Liste des produits avec pagination et filtres
-   */
+  // Liste des produits avec pagination et filtres
   async getProducts(params: {
     page: number;
     limit: number;
@@ -346,9 +343,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Alertes de stock
-   */
+  // Alertes de stock
   async getStockAlerts(threshold: number = 10) {
     const [lowStock, outOfStock] = await Promise.all([
       this.prisma.product.findMany({
@@ -402,9 +397,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Statistiques des commandes
-   */
+  // Statistiques des commandes
   async getOrderStats() {
     const [total, pending, processing, shipped, delivered, cancelled] =
       await Promise.all([
@@ -416,8 +409,7 @@ export class AdminService {
         this.prisma.order.count({ where: { status: 'CANCELLED' } }),
       ]);
 
-    const cancellationRate =
-      total > 0 ? (cancelled / total) * 100 : 0;
+    const cancellationRate = total > 0 ? (cancelled / total) * 100 : 0;
 
     return {
       totalOrders: total,
@@ -430,9 +422,7 @@ export class AdminService {
     };
   }
 
-  /**
-   * Liste des commandes avec pagination et filtres
-   */
+  // Liste des commandes avec pagination et filtres
   async getOrders(params: {
     page: number;
     limit: number;
@@ -480,7 +470,9 @@ export class AdminService {
     const data = orders.map((order) => ({
       id: order.id,
       orderNumber: order.orderNumber,
-      customerName: `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || order.user.email,
+      customerName:
+        `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() ||
+        order.user.email,
       customerEmail: order.user.email,
       itemsCount: order.orderItems.length,
       totalAmount: Number(order.totalAmount),
@@ -497,18 +489,14 @@ export class AdminService {
     };
   }
 
-  /**
-   * Helper : Début du jour
-   */
+  // Helper : Début du jour
   private getStartOfDay(): Date {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     return now;
   }
 
-  /**
-   * Helper : Début de la semaine
-   */
+  // Helper : Début de la semaine
   private getStartOfWeek(): Date {
     const now = new Date();
     const day = now.getDay();
@@ -518,9 +506,7 @@ export class AdminService {
     return now;
   }
 
-  /**
-   * Helper : Début du mois
-   */
+  // Helper : Début du mois
   private getStartOfMonth(): Date {
     const now = new Date();
     now.setDate(1);
@@ -528,12 +514,11 @@ export class AdminService {
     return now;
   }
 
-  /**
-   * Helper : Ventes des 7 derniers jours
-   */
+  // Helper : Ventes des 7 derniers jours
   private async getLast7DaysSales() {
     const today = new Date();
-    const last7Days: Array<{ date: string; revenue: number; orders: number }> = [];
+    const last7Days: Array<{ date: string; revenue: number; orders: number }> =
+      [];
 
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
@@ -574,9 +559,7 @@ export class AdminService {
     return last7Days;
   }
 
-  /**
-   * Helper : Top catégories
-   */
+  // Helper : Top catégories
   private async getTopCategories() {
     const categories = await this.prisma.category.findMany({
       select: {

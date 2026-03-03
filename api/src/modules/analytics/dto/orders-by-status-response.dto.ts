@@ -13,7 +13,10 @@ export class OrderStatusItemDto {
 }
 
 export class OrdersByStatusResponseDto {
-  @ApiProperty({ description: 'Répartition par statut', type: [OrderStatusItemDto] })
+  @ApiProperty({
+    description: 'Répartition par statut',
+    type: [OrderStatusItemDto],
+  })
   data: OrderStatusItemDto[];
 
   @ApiProperty({ description: 'Nombre total de commandes', example: 150 })

@@ -1,15 +1,8 @@
-/**
- * Interfaces du module Reviews
- * @description Définitions des types et interfaces pour la gestion des avis
- */
-
 import { Prisma } from '@prisma/client';
 
 type Review = Prisma.ReviewGetPayload<Record<string, never>>;
 
-/**
- * Interface pour un avis avec les relations
- */
+// Interface pour un avis avec les relations
 export interface ReviewWithUser extends Review {
   user: {
     id: string;
@@ -18,9 +11,7 @@ export interface ReviewWithUser extends Review {
   };
 }
 
-/**
- * Interface pour un avis avec les relations du produit
- */
+// Interface pour un avis avec les relations du produit
 export interface ReviewWithRelations extends Review {
   user: {
     id: string;
@@ -35,9 +26,7 @@ export interface ReviewWithRelations extends Review {
   };
 }
 
-/**
- * Type pour la création d'un avis
- */
+// Type pour la création d'un avis
 export interface CreateReviewInput {
   productId: string;
   userId: string;
@@ -45,17 +34,13 @@ export interface CreateReviewInput {
   comment?: string;
 }
 
-/**
- * Type pour la mise à jour d'un avis
- */
+// Type pour la mise à jour d'un avis
 export interface UpdateReviewInput {
   rating?: number;
   comment?: string;
 }
 
-/**
- * Type pour le résumé des notes d'un produit
- */
+// Type pour le résumé des notes d'un produit
 export interface RatingSummary {
   productId: string;
   averageRating: number;
@@ -69,9 +54,7 @@ export interface RatingSummary {
   };
 }
 
-/**
- * Type pour la vérification d'achat
- */
+// Type pour la vérification d'achat
 export interface PurchaseVerification {
   hasPurchased: boolean;
   orderId?: string;

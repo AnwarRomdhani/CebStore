@@ -1,8 +1,3 @@
-/**
- * Service Flouci Payments
- * @description Gère les paiements via l'API Flouci
- */
-
 import {
   Injectable,
   Logger,
@@ -84,10 +79,9 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Initier un nouveau paiement
-   */
+  // Initier un nouveau paiement
   async initiatePayment(
+    userId: string,
     dto: InitiatePaymentDto,
   ): Promise<PaymentInitiationResponseDto> {
     try {
@@ -100,8 +94,14 @@ export class FlouciService {
         throw new NotFoundException(`Commande ${dto.orderId} non trouvée`);
       }
 
+      // Empêcher de payer une commande appartenant à un autre utilisateur
+      if (order.userId !== userId) {
+        throw new NotFoundException(`Commande ${dto.orderId} non trouvée`);
+      }
+
       // Vérifier le montant
-      const amount = dto.amount || Number(order.totalAmount);
+      // Ne jamais faire confiance au montant client: utiliser le montant serveur
+      const amount = Number(order.totalAmount);
       if (amount <= 0) {
         throw new BadRequestException('Le montant doit être supérieur à 0');
       }
@@ -200,10 +200,9 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Vérifier le statut d\'un paiement
-   */
+  // Vérifier le statut d\'un paiement
   async verifyPayment(
+    userId: string,
     dto: VerifyPaymentDto,
   ): Promise<PaymentVerificationResponseDto> {
     try {
@@ -219,6 +218,10 @@ export class FlouciService {
       });
 
       if (!payment) {
+        throw new NotFoundException('Paiement non trouvé');
+      }
+
+      if (payment.userId !== userId) {
         throw new NotFoundException('Paiement non trouvé');
       }
 
@@ -290,9 +293,7 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Traiter le webhook Flouci
-   */
+  // Traiter le webhook Flouci
   async handleWebhook(
     webhookDto: FlouciWebhookData,
     signature?: string,
@@ -384,9 +385,7 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Effectuer un paiement de test avec wallet simulé
-   */
+  // Effectuer un paiement de test avec wallet simulé
   async simulateTestPayment(
     dto: TestWalletPaymentDto,
   ): Promise<PaymentInitiationResponseDto> {
@@ -481,12 +480,13 @@ export class FlouciService {
     };
   }
 
-  /**
-   * Obtenir le statut complet d\'un paiement
-   */
-  async getPaymentStatus(orderId: string): Promise<PaymentStatusResponseDto> {
-    const payment = await this.prisma.payment.findUnique({
-      where: { orderId },
+  // Obtenir le statut complet d\'un paiement
+  async getPaymentStatus(
+    userId: string,
+    orderId: string,
+  ): Promise<PaymentStatusResponseDto> {
+    const payment = await this.prisma.payment.findFirst({
+      where: { orderId, userId },
     });
 
     if (!payment) {
@@ -510,12 +510,13 @@ export class FlouciService {
     };
   }
 
-  /**
-   * Annuler un paiement
-   */
-  async cancelPayment(trackingId: string): Promise<{ message: string }> {
+  // Annuler un paiement
+  async cancelPayment(
+    userId: string,
+    trackingId: string,
+  ): Promise<{ message: string }> {
     const payment = await this.prisma.payment.findFirst({
-      where: { transactionId: trackingId },
+      where: { transactionId: trackingId, userId },
     });
 
     if (!payment) {
@@ -536,9 +537,7 @@ export class FlouciService {
     return { message: 'Paiement annulé avec succès' };
   }
 
-  /**
-   * Mapper le statut Flouci vers notre enum
-   */
+  // Mapper le statut Flouci vers notre enum
   private mapFlouciStatus(
     flouciStatus: string,
   ): 'PENDING' | 'COMPLETED' | 'FAILED' {
@@ -553,9 +552,7 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Obtenir le message selon le statut
-   */
+  // Obtenir le message selon le statut
   private getStatusMessage(status: string): string {
     switch (status) {
       case 'COMPLETED':
@@ -569,9 +566,7 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Gérer un paiement réussi
-   */
+  // Gérer un paiement réussi
   private async handleSuccessfulPayment(payment: {
     id: string;
     orderId: string;
@@ -592,9 +587,7 @@ export class FlouciService {
     }
   }
 
-  /**
-   * Gérer un paiement échoué
-   */
+  // Gérer un paiement échoué
   private handleFailedPayment(
     payment: { id: string; orderId: string; amount: number },
     webhookDto: { status: string },
@@ -602,9 +595,7 @@ export class FlouciService {
     this.logger.warn(`Payment ${payment.id} failed: ${webhookDto.status}`);
   }
 
-  /**
-   * Déclencher le webhook n8n
-   */
+  // Déclencher le webhook n8n
   private async triggerN8nWebhook(
     orderId: string,
     status: string,
@@ -629,11 +620,7 @@ export class FlouciService {
     }
   }
 
-  // ==================== ADMIN : GESTION ====================
-
-  /**
-   * [ADMIN] Liste des paiements
-   */
+  //[ADMIN] Liste des paiements
   async getPayments(page: number, limit: number, status?: string) {
     const skip = (page - 1) * limit;
     const where: any = {};
@@ -677,7 +664,8 @@ export class FlouciService {
         paymentMethod: p.paymentMethod,
         orderNumber: p.order.orderNumber,
         customerEmail: p.user.email,
-        customerName: `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim(),
+        customerName:
+          `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || 'N/A',
         createdAt: p.createdAt,
       })),
       total,
@@ -687,9 +675,7 @@ export class FlouciService {
     };
   }
 
-  /**
-   * [ADMIN] Détail d'un paiement
-   */
+  // [ADMIN] Détail d'un paiement
   async getPaymentDetail(id: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
@@ -729,10 +715,8 @@ export class FlouciService {
     };
   }
 
-  /**
-   * [ADMIN] Rembourser un paiement
-   */
-  async refundPayment(id: string, amount?: number, reason?: string) {
+  // [ADMIN] Rembourser un paiement
+  async refundPayment(id: string, amount?: number, _reason?: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { order: true },
@@ -743,17 +727,23 @@ export class FlouciService {
     }
 
     if (payment.status !== 'COMPLETED') {
-      throw new BadRequestException('Seuls les paiements complétés peuvent être remboursés');
+      throw new BadRequestException(
+        'Seuls les paiements complétés peuvent être remboursés',
+      );
     }
 
-    // Créer un paiement de remboursement (status REFUNDED)
-    const refund = await this.prisma.payment.create({
+    // NOTE: Payment.orderId est unique => pas de 2ème ligne "refund" possible.
+    // Ici, on marque le paiement existant comme remboursé.
+    if (amount !== undefined && amount !== Number(payment.amount)) {
+      throw new BadRequestException(
+        'Le remboursement partiel n’est pas supporté par ce modèle de données',
+      );
+    }
+
+    const refund = await this.prisma.payment.update({
+      where: { id: payment.id },
       data: {
-        amount: amount ? new Prisma.Decimal(amount) : payment.amount,
         status: 'REFUNDED',
-        currency: payment.currency,
-        userId: payment.userId,
-        orderId: payment.orderId,
         paymentMethod: `refund_${payment.paymentMethod || 'flouci'}`,
         transactionId: `refund_${payment.transactionId || id}`,
       },
@@ -776,12 +766,40 @@ export class FlouciService {
     };
   }
 
-  /**
-   * [ADMIN] Configuration Flouci
-   */
-  async getConfig() {
+  // [ADMIN] Statistiques de paiement
+  async getPaymentStats(): Promise<{
+    totalPayments: number;
+    completedPayments: number;
+    failedPayments: number;
+    pendingPayments: number;
+    totalRevenue: number;
+  }> {
+    const [total, completed, failed, pending, revenue] = await Promise.all([
+      this.prisma.payment.count(),
+      this.prisma.payment.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.payment.count({ where: { status: 'FAILED' } }),
+      this.prisma.payment.count({ where: { status: 'PENDING' } }),
+      this.prisma.payment.aggregate({
+        where: { status: 'COMPLETED' },
+        _sum: { amount: true },
+      }),
+    ]);
+
     return {
-      publicKey: this.publicKey ? `${this.publicKey.substring(0, 8)}...` : 'non configuré',
+      totalPayments: total,
+      completedPayments: completed,
+      failedPayments: failed,
+      pendingPayments: pending,
+      totalRevenue: Number(revenue._sum.amount) || 0,
+    };
+  }
+
+  // [ADMIN] Configuration Flouci
+  getConfig() {
+    return {
+      publicKey: this.publicKey
+        ? `${this.publicKey.substring(0, 8)}...`
+        : 'non configuré',
       privateKey: this.privateKey ? '***' : 'non configuré',
       baseUrl: this.baseUrl,
       sandbox: this.sandbox,
@@ -789,9 +807,7 @@ export class FlouciService {
     };
   }
 
-  /**
-   * [ADMIN] Tendance des paiements
-   */
+  // [ADMIN] Tendance des paiements
   async getPaymentTrends(period: 'day' | 'week' | 'month') {
     const now = new Date();
     const startDate = new Date();

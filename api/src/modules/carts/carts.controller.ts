@@ -31,9 +31,7 @@ import { CheckoutDto } from './dto/checkout.dto';
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
-  /**
-   * Obtenir le panier de l'utilisateur connecté
-   */
+  // Obtenir le panier de l'utilisateur connecté
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -46,9 +44,7 @@ export class CartsController {
     return this.cartsService.getCart(req.user.id);
   }
 
-  /**
-   * Obtenir le nombre d'items dans le panier
-   */
+  // Obtenir le nombre d'items dans le panier
   @Get('count')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -59,9 +55,7 @@ export class CartsController {
     return { count };
   }
 
-  /**
-   * Ajouter un produit au panier
-   */
+  // Ajouter un produit au panier
   @Post('items')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -77,9 +71,7 @@ export class CartsController {
     return this.cartsService.addToCart(req.user.id, addToCartDto);
   }
 
-  /**
-   * Mettre à jour un item du panier
-   */
+  // Mettre à jour un item du panier
   @Put('items/:cartItemId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -100,9 +92,7 @@ export class CartsController {
     );
   }
 
-  /**
-   * Supprimer un item du panier
-   */
+  // Supprimer un item du panier
   @Delete('items/:cartItemId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -119,9 +109,7 @@ export class CartsController {
     return;
   }
 
-  /**
-   * Vider le panier
-   */
+  // Vider le panier
   @Delete()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -133,9 +121,7 @@ export class CartsController {
     return;
   }
 
-  /**
-   * Valider le panier
-   */
+  // Valider le panier
   @Get('validate')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -145,9 +131,7 @@ export class CartsController {
     return this.cartsService.validateCart(req.user.id);
   }
 
-  /**
-   * Checkout - Passer commande
-   */
+  // Checkout - Passer commande
   @Post('checkout')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

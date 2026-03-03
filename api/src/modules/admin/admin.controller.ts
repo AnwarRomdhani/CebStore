@@ -1,14 +1,7 @@
-/**
- * Contrôleur d'administration centralisée
- * @description Point d'entrée unique pour toutes les fonctionnalités admin
- */
-
 import {
   Controller,
   Get,
   Post,
-  Patch,
-  Delete,
   Param,
   Query,
   Body,
@@ -18,7 +11,6 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -30,9 +22,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import {
-  DashboardResponseDto,
-} from './dto/dashboard-response.dto';
+import { DashboardResponseDto } from './dto/dashboard-response.dto';
 import { UsersListResponseDto } from './dto/users-response.dto';
 import {
   ProductsListResponseDto,
@@ -40,7 +30,6 @@ import {
 } from './dto/products-response.dto';
 import { OrdersListResponseDto } from './dto/orders-response.dto';
 import {
-  PaginationDto,
   SearchUserDto,
   SearchProductDto,
   SearchOrderDto,
@@ -54,15 +43,11 @@ import {
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // ==================== DASHBOARD ====================
-
-  /**
-   * Dashboard complet
-   */
+  // Dashboard complet
   @Get('dashboard')
   @ApiOperation({
     summary: 'Dashboard complet',
-    description: 'Vue d\'ensemble de tous les KPIs et données importantes',
+    description: 'Vue densemble de tous les KPIs et données importantes',
   })
   @ApiResponse({
     status: 200,
@@ -72,12 +57,7 @@ export class AdminController {
   async getDashboard() {
     return this.adminService.getDashboard();
   }
-
-  // ==================== UTILISATEURS ====================
-
-  /**
-   * Statistiques des utilisateurs
-   */
+  // Statistiques des utilisateurs
   @Get('users/stats')
   @ApiOperation({
     summary: 'Statistiques des utilisateurs',
@@ -91,9 +71,7 @@ export class AdminController {
     return this.adminService.getUserStats();
   }
 
-  /**
-   * Liste des utilisateurs
-   */
+  //Liste des utilisateurs
   @Get('users')
   @ApiOperation({
     summary: 'Liste des utilisateurs',
@@ -125,16 +103,14 @@ export class AdminController {
     });
   }
 
-  /**
-   * Bannir un utilisateur
-   */
+  // Bannir un utilisateur
   @Post('users/:id/ban')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bannir un utilisateur',
-    description: 'Désactive le compte d\'un utilisateur',
+    description: 'Désactive le compte dun utilisateur',
   })
-  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur' })
+  @ApiParam({ name: 'id', description: 'ID de lutilisateur' })
   @ApiResponse({
     status: 200,
     description: 'Utilisateur banni avec succès',
@@ -151,11 +127,7 @@ export class AdminController {
     return this.adminService.banUser(id);
   }
 
-  // ==================== PRODUITS ====================
-
-  /**
-   * Statistiques des produits
-   */
+  // Statistiques des produits
   @Get('products/stats')
   @ApiOperation({
     summary: 'Statistiques des produits',
@@ -169,9 +141,7 @@ export class AdminController {
     return this.adminService.getProductStats();
   }
 
-  /**
-   * Liste des produits
-   */
+  //Liste des produits
   @Get('products')
   @ApiOperation({
     summary: 'Liste des produits',
@@ -209,9 +179,7 @@ export class AdminController {
     });
   }
 
-  /**
-   * Alertes de stock
-   */
+  //Alertes de stock
   @Get('products/stock-alerts')
   @ApiOperation({
     summary: 'Alertes de stock',
@@ -220,7 +188,7 @@ export class AdminController {
   @ApiQuery({
     name: 'threshold',
     required: false,
-    description: 'Seuil d\'alerte (défaut: 10)',
+    description: 'Seuil dalerte (défaut: 10)',
     example: 10,
   })
   @ApiResponse({
@@ -232,15 +200,11 @@ export class AdminController {
     return this.adminService.getStockAlerts(Number(threshold) || 10);
   }
 
-  // ==================== COMMANDES ====================
-
-  /**
-   * Statistiques des commandes
-   */
+  //Statistiques des commandes
   @Get('orders/stats')
   @ApiOperation({
     summary: 'Statistiques des commandes',
-    description: 'Répartition par statut, taux d\'annulation',
+    description: 'Répartition par statut, taux dannulation',
   })
   @ApiResponse({
     status: 200,
@@ -251,9 +215,7 @@ export class AdminController {
     return this.adminService.getOrderStats();
   }
 
-  /**
-   * Liste des commandes
-   */
+  //Liste des commandes
   @Get('orders')
   @ApiOperation({
     summary: 'Liste des commandes',
@@ -284,22 +246,17 @@ export class AdminController {
       status: query.status,
     });
   }
-
-  // ==================== SYSTÈME ====================
-
-  /**
-   * Health check du système
-   */
+  //Health check du système
   @Get('system/health')
   @ApiOperation({
     summary: 'Health check',
-    description: 'Vérifie l\'état des services',
+    description: 'Vérifie létat des services',
   })
   @ApiResponse({
     status: 200,
     description: 'Services opérationnels',
   })
-  async healthCheck() {
+  healthCheck() {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -310,9 +267,7 @@ export class AdminController {
     };
   }
 
-  /**
-   * Résumé des activités récentes
-   */
+  // Résumé des activités récentes
   @Get('activity/recent')
   @ApiOperation({
     summary: 'Activités récentes',
@@ -323,7 +278,7 @@ export class AdminController {
     status: 200,
     description: 'Activités récentes',
   })
-  async getRecentActivity(@Query('limit') limit?: number) {
+  async getRecentActivity(@Query('limit') _limit?: number) {
     // Pour l'instant, retourne les dernières commandes
     // Pourra être étendu avec les audit logs
     return this.adminService.getDashboard();

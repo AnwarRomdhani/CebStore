@@ -1,5 +1,3 @@
-// DTO for changing user password
-
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 

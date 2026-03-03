@@ -6,6 +6,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
+import { parseDurationToSeconds } from 'src/utils/duration.utils';
+import { getJwtSecret } from 'src/config/auth-secrets';
 
 @Module({
   imports: [
@@ -13,9 +15,12 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') ?? 'defaultsecret2026',
+        secret: getJwtSecret(configService),
         signOptions: {
-          expiresIn: Number(configService.get<number>('JWT_EXPIRES_IN', 3600)),
+          expiresIn: parseDurationToSeconds(
+            configService.get<string>('JWT_EXPIRATION', '15m'),
+            900,
+          ),
         },
       }),
     }),

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 
 export class PaginationDto {
@@ -16,7 +16,10 @@ export class PaginationDto {
 }
 
 export class SearchUserDto {
-  @ApiPropertyOptional({ description: 'Terme de recherche', example: 'mohamed' })
+  @ApiPropertyOptional({
+    description: 'Terme de recherche',
+    example: 'mohamed',
+  })
   @IsOptional()
   @IsString()
   search?: string;
@@ -40,12 +43,18 @@ export class SearchUserDto {
 }
 
 export class SearchProductDto {
-  @ApiPropertyOptional({ description: 'Terme de recherche', example: 'chaussures' })
+  @ApiPropertyOptional({
+    description: 'Terme de recherche',
+    example: 'chaussures',
+  })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Filtre par catégorie', example: 'uuid-cat' })
+  @ApiPropertyOptional({
+    description: 'Filtre par catégorie',
+    example: 'uuid-cat',
+  })
   @IsOptional()
   @IsString()
   categoryId?: string;
@@ -69,7 +78,10 @@ export class SearchProductDto {
 }
 
 export class SearchOrderDto {
-  @ApiPropertyOptional({ description: 'Terme de recherche (email, orderNumber)', example: 'cmd-123' })
+  @ApiPropertyOptional({
+    description: 'Terme de recherche (email, orderNumber)',
+    example: 'cmd-123',
+  })
   @IsOptional()
   @IsString()
   search?: string;

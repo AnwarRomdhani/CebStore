@@ -36,18 +36,18 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { User } from '@prisma/client';
+import { StrictThrottle } from 'src/common/decorators/custom-throttler.decorator';
 
 @ApiTags('ai')
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
-  // ==================== EMBEDDINGS ====================
-
-  /**
-   * Générer un embedding pour un texte
-   */
+  // Générer un embedding pour un texte
   @Post('embeddings')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Générer un embedding vectoriel',
     description: 'Encode un texte en vecteur sémantique avec OpenAI',
@@ -68,10 +68,11 @@ export class AiController {
     return this.aiService.generateEmbedding(dto);
   }
 
-  /**
-   * Effectuer une recherche sémantique
-   */
+  // Effectuer une recherche sémantique
   @Post('search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Recherche sémantique',
     description:
@@ -89,12 +90,11 @@ export class AiController {
     return this.aiService.semanticSearch(dto);
   }
 
-  // ==================== CHATBOT ====================
-
-  /**
-   * Chatbot conversationnel
-   */
+  //Chatbot conversationnel
   @Post('chat')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Chatbot conversationnel',
     description: "Assistant commercial basé sur RAG pour l'e-commerce",
@@ -109,9 +109,7 @@ export class AiController {
     return this.aiService.chatbot(dto);
   }
 
-  /**
-   * Créer une session de chat
-   */
+  // Créer une session de chat
   @Post('chat/session')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -141,11 +139,7 @@ export class AiController {
     };
   }
 
-  // ==================== RECOMMANDATIONS ====================
-
-  /**
-   * Obtenir des recommandations de produits
-   */
+  //Obtenir des recommandations de produits
   @Post('recommendations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -169,12 +163,11 @@ export class AiController {
     });
   }
 
-  // ==================== ANALYSE ====================
-
-  /**
-   * Analyser le sentiment d\'un texte
-   */
+  //Analyser le sentiment d\'un texte
   @Post('sentiment')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Analyse de sentiment',
     description: 'Analyse le sentiment dun texte (avis, commentaire, etc.)',
@@ -191,10 +184,11 @@ export class AiController {
     return this.aiService.analyzeSentiment(dto);
   }
 
-  /**
-   * Générer une description SEO
-   */
+  // Générer une description SEO
   @Post('seo')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Génération SEO',
     description: 'Génère des méta-données optimisées pour le SEO',
@@ -211,11 +205,7 @@ export class AiController {
     return this.aiService.generateSEO(dto);
   }
 
-  // ==================== BASE DE CONNAISSANCES ====================
-
-  /**
-   * Ajouter un document à la base de connaissances (Admin)
-   */
+  //Ajouter un document à la base de connaissances (Admin)
   @Post('knowledge')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -236,9 +226,7 @@ export class AiController {
     return this.aiService.addKnowledgeDocument(dto);
   }
 
-  /**
-   * Indexer un produit (Admin)
-   */
+  // Indexer un produit (Admin)
   @Post('knowledge/product')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -259,10 +247,11 @@ export class AiController {
     return this.aiService.indexProduct(dto);
   }
 
-  /**
-   * Obtenir les statistiques de la base de connaissances
-   */
+  // Obtenir les statistiques de la base de connaissances
   @Get('knowledge/stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Statistiques de la base de connaissances',
   })
@@ -275,13 +264,11 @@ export class AiController {
     return this.aiService.getKnowledgeBaseStats();
   }
 
-  // ==================== RECHERCHE PRODUITS ====================
-
-  /**
-   * Rechercher des produits similaires par requête textuelle
-   * Exemple: GET /ai/products/similar?query=chaussures%20pour%20homme
-   */
+  //Rechercher des produits similaires par requête textuelle
   @Get('products/similar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Rechercher des produits similaires',
     description:
@@ -351,12 +338,11 @@ export class AiController {
     });
   }
 
-  // ==================== SANTÉ ====================
-
-  /**
-   * Vérifier létat du service AI
-   */
+  //Vérifier létat du service AI
   @Get('health')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @StrictThrottle()
   @ApiOperation({
     summary: 'Vérifier ltat du service AI',
   })

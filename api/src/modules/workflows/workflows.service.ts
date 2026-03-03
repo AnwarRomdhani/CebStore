@@ -1,8 +1,3 @@
-/**
- * Service de gestion des workflows n8n
- * @description Déclenche les workflows n8n pour les notifications automatisées
- */
-
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -10,9 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TriggerWorkflowDto } from './dto/trigger-workflow.dto';
 
-/**
- * Type d'événement pour les workflows
- */
+// Type d'événement pour les workflows
 export enum WorkflowEventType {
   ORDER_CONFIRMED = 'order_confirmed',
   ORDER_SHIPPED = 'order_shipped',
@@ -26,18 +19,14 @@ export enum WorkflowEventType {
   REVIEW_SUBMITTED = 'review_submitted',
 }
 
-/**
- * Payload pour les webhooks n8n
- */
+// Payload pour les webhooks n8n
 export interface N8nWebhookPayload {
   event: WorkflowEventType;
   timestamp: string;
   data: Record<string, unknown>;
 }
 
-/**
- * Réponse du webhook n8n
- */
+// Réponse du webhook n8n
 export interface N8nWebhookResponse {
   success: boolean;
   message?: string;
@@ -47,6 +36,7 @@ export interface N8nWebhookResponse {
 @Injectable()
 export class WorkflowsService {
   private readonly logger = new Logger(WorkflowsService.name);
+  private readonly allowedWebhookHosts: Set<string>;
 
   // URLs des webhooks n8n
   private readonly orderWebhook: string;
@@ -75,13 +65,15 @@ export class WorkflowsService {
     this.reviewWebhook =
       this.configService.get<string>('N8N_REVIEW_WEBHOOK') || '';
     this.timeout = this.configService.get<number>('N8N_TIMEOUT', 30000);
+    this.allowedWebhookHosts = new Set(
+      (this.configService.get<string>('N8N_ALLOWED_WEBHOOK_HOSTS', '') || '')
+        .split(',')
+        .map((host) => host.trim().toLowerCase())
+        .filter(Boolean),
+    );
   }
 
-  /**
-   * Déclencher un workflow n8n
-   * @param dto - Données du workflow à déclencher
-   * @returns Réponse du webhook n8n
-   */
+  // Déclencher un workflow n8n
   async triggerWorkflow(dto: TriggerWorkflowDto): Promise<N8nWebhookResponse> {
     const { eventType, data, webhookUrl } = dto;
 
@@ -97,10 +89,22 @@ export class WorkflowsService {
 
     if (!targetUrl) {
       this.logger.warn(`No webhook URL configured for event: ${eventType}`);
-      return {
-        success: false,
-        message: `Aucun webhook configuré pour l'événement: ${eventType}`,
-      };
+      throw new BadRequestException(
+        `Aucun webhook configuré pour l'événement: ${eventType}`,
+      );
+    }
+
+    if (webhookUrl && this.allowedWebhookHosts.size === 0) {
+      throw new BadRequestException(
+        'Aucune allowlist configurée pour les webhooks dynamiques (N8N_ALLOWED_WEBHOOK_HOSTS)',
+      );
+    }
+
+    if (!this.isAllowedWebhookUrl(targetUrl)) {
+      this.logger.warn(`Blocked webhook URL: ${targetUrl}`);
+      throw new BadRequestException(
+        "URL de webhook non autorisée par l'allowlist",
+      );
     }
 
     try {
@@ -129,9 +133,7 @@ export class WorkflowsService {
     }
   }
 
-  /**
-   * Obtenir l'URL du webhook approprié pour un type d'événement
-   */
+  // Obtenir l'URL du webhook approprié pour un type d'événement
   private getWebhookUrlForEvent(eventType: WorkflowEventType): string {
     switch (eventType) {
       case WorkflowEventType.ORDER_CONFIRMED:
@@ -155,13 +157,24 @@ export class WorkflowsService {
     }
   }
 
-  // ==================== WORKFLOWS PRÉDÉFINIS ====================
+  private isAllowedWebhookUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      if (!['https:', 'http:'].includes(parsed.protocol)) {
+        return false;
+      }
 
-  /**
-   * WORKFLOW 1: Confirmation de commande
-   * Déclenché lorsqu'une commande est payée avec succès
-   * Envoie un email de confirmation au client et une notification admin
-   */
+      if (this.allowedWebhookHosts.size === 0) {
+        return true;
+      }
+
+      return this.allowedWebhookHosts.has(parsed.hostname.toLowerCase());
+    } catch {
+      return false;
+    }
+  }
+
+  // WORKFLOW 1: Confirmation de commande
   async triggerOrderConfirmation(orderId: string): Promise<N8nWebhookResponse> {
     try {
       // Récupérer les détails de la commande
@@ -226,11 +239,7 @@ export class WorkflowsService {
     }
   }
 
-  /**
-   * WORKFLOW 2: Alerte stock faible
-   * Déclenché automatiquement ou manuellement pour vérifier le stock
-   * Envoie une notification à l'admin quand un produit est en rupture
-   */
+  // WORKFLOW 2: Alerte stock faible
   async triggerLowStockAlert(productId: string): Promise<N8nWebhookResponse> {
     try {
       const product = await this.prisma.product.findUnique({
@@ -284,10 +293,7 @@ export class WorkflowsService {
     }
   }
 
-  /**
-   * Vérifier tous les produits pour le stock faible
-   * Utilisé par un cron job ou appelé manuellement
-   */
+  // Vérifier tous les produits pour le stock faible
   async checkAllProductsStock(): Promise<{
     checked: number;
     lowStock: number;
@@ -332,10 +338,7 @@ export class WorkflowsService {
     };
   }
 
-  /**
-   * WORKFLOW 3: Notification panier abandonné
-   * Déclenché pour les paniers non convertis après un délai
-   */
+  // WORKFLOW 3: Notification panier abandonné
   async triggerAbandonedCartNotification(
     cartId: string,
   ): Promise<N8nWebhookResponse> {
@@ -413,10 +416,7 @@ export class WorkflowsService {
     }
   }
 
-  /**
-   * Trouver et notifier les paniers abandonnés
-   * Paniers non convertis depuis plus de 24 heures
-   */
+  // Trouver et notifier les paniers abandonnés
   async findAndNotifyAbandonedCarts(): Promise<{
     found: number;
     notified: number;
@@ -452,9 +452,7 @@ export class WorkflowsService {
     };
   }
 
-  /**
-   * Déclencher une notification de paiement réussi
-   */
+  // Déclencher une notification de paiement réussi
   async triggerPaymentSuccess(orderId: string): Promise<N8nWebhookResponse> {
     try {
       const order = await this.prisma.order.findUnique({
@@ -499,9 +497,7 @@ export class WorkflowsService {
     }
   }
 
-  /**
-   * Calculer la date de livraison estimée (3-5 jours ouvrables)
-   */
+  // Calculer la date de livraison estimée (3-5 jours ouvrables)
   private calculateEstimatedDelivery(): string {
     const today = new Date();
     const deliveryDate = new Date(today);
@@ -509,10 +505,7 @@ export class WorkflowsService {
     return deliveryDate.toISOString();
   }
 
-  /**
-   * Vérifier la santé du service n8n
-   * Teste la connexion aux webhooks
-   */
+  // Vérifier la santé du service n8n
   healthCheck(): Promise<{
     status: string;
     webhooks: Record<string, boolean>;
@@ -534,12 +527,8 @@ export class WorkflowsService {
     });
   }
 
-  // ==================== ADMIN : SURVEILLANCE ====================
-
-  /**
-   * [ADMIN] Historique des exécutions de workflows
-   */
-  async getWorkflowHistory() {
+  //[ADMIN] Historique des exécutions de workflows
+  getWorkflowHistory() {
     // Simuler un historique (à stocker en DB dans une table workflow_logs)
     return {
       history: [
@@ -570,10 +559,8 @@ export class WorkflowsService {
     };
   }
 
-  /**
-   * [ADMIN] Statistiques des workflows
-   */
-  async getWorkflowStats() {
+  // [ADMIN] Statistiques des workflows
+  getWorkflowStats() {
     return {
       totalExecutions: 1250,
       successRate: 98.5,
@@ -593,14 +580,15 @@ export class WorkflowsService {
     };
   }
 
-  /**
-   * [ADMIN] Configuration des webhooks n8n
-   */
-  async getWebhooksConfig() {
+  // [ADMIN] Configuration des webhooks n8n
+  getWebhooksConfig() {
     return {
       webhooks: {
         order: { url: this.orderWebhook, configured: !!this.orderWebhook },
-        payment: { url: this.paymentWebhook, configured: !!this.paymentWebhook },
+        payment: {
+          url: this.paymentWebhook,
+          configured: !!this.paymentWebhook,
+        },
         stock: { url: this.stockWebhook, configured: !!this.stockWebhook },
         user: { url: this.userWebhook, configured: !!this.userWebhook },
         cart: { url: this.cartWebhook, configured: !!this.cartWebhook },
@@ -610,9 +598,7 @@ export class WorkflowsService {
     };
   }
 
-  /**
-   * [ADMIN] Tester un webhook
-   */
+  // [ADMIN] Tester un webhook
   async testWebhook(name: string) {
     const webhookMap = {
       order: this.orderWebhook,

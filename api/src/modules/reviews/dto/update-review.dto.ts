@@ -1,8 +1,3 @@
-/**
- * DTO pour la mise à jour d'un avis client
- * @description Permet de modifier la note et/ou le commentaire d'un avis existant
- */
-
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsInt,

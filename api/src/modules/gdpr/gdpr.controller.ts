@@ -1,12 +1,6 @@
-/**
- * Contrôleur de conformité RGPD
- * @description Endpoints pour la gestion des données personnelles
- */
-
 import {
   Controller,
   Get,
-  Post,
   Delete,
   Patch,
   Body,
@@ -32,9 +26,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 export class GdprController {
   constructor(private readonly gdprService: GdprService) {}
 
-  /**
-   * Exporter mes données personnelles
-   */
+  // Exporter mes données personnelles
   @Get('export')
   @ApiOperation({
     summary: 'Exporter mes données personnelles',
@@ -49,13 +41,12 @@ export class GdprController {
     return this.gdprService.exportPersonalData(userId);
   }
 
-  /**
-   * Résumé des données stockées
-   */
+  // Résumé des données stockées
   @Get('summary')
   @ApiOperation({
     summary: 'Résumé des données stockées',
-    description: 'Voir quelles données sont stockées et leur durée de conservation',
+    description:
+      'Voir quelles données sont stockées et leur durée de conservation',
   })
   @ApiResponse({
     status: 200,
@@ -65,13 +56,12 @@ export class GdprController {
     return this.gdprService.getDataSummary(userId);
   }
 
-  /**
-   * Modifier mes données personnelles
-   */
+  // Modifier mes données personnelles
   @Patch('update')
   @ApiOperation({
     summary: 'Modifier mes données personnelles',
-    description: 'Mettez à jour vos informations (Conformité RGPD - Article 16)',
+    description:
+      'Mettez à jour vos informations (Conformité RGPD - Article 16)',
   })
   @ApiBody({
     schema: {
@@ -94,9 +84,7 @@ export class GdprController {
     return this.gdprService.updatePersonalData(userId, data);
   }
 
-  /**
-   * Supprimer mon compte (droit à l'oubli)
-   */
+  // Supprimer mon compte (droit à l'oubli)
   @Delete('delete-account')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -116,9 +104,7 @@ export class GdprController {
     return this.gdprService.deleteAccount(userId);
   }
 
-  /**
-   * Informations sur la conformité RGPD
-   */
+  // Informations sur la conformité RGPD
   @Get('info')
   @ApiOperation({
     summary: 'Informations RGPD',
@@ -135,7 +121,7 @@ export class GdprController {
       rights: [
         {
           article: 'Article 15',
-          right: 'Droit d\'accès',
+          right: 'Droit daccès',
           description: 'Vous pouvez accéder à toutes vos données personnelles',
           endpoint: 'GET /gdpr/export',
         },
@@ -147,7 +133,7 @@ export class GdprController {
         },
         {
           article: 'Article 17',
-          right: 'Droit à l\'effacement',
+          right: 'Droit à leffacement',
           description: 'Vous pouvez demander la suppression de votre compte',
           endpoint: 'DELETE /gdpr/delete-account',
         },

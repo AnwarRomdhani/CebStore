@@ -1,8 +1,3 @@
-/**
- * Service de gestion des codes promo
- * @description Gère la logique métier pour les promotions et remises
- */
-
 import {
   BadRequestException,
   ConflictException,
@@ -27,11 +22,7 @@ import { Discount, Prisma } from '@prisma/client';
 export class DiscountsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Créer un nouveau code promo
-   * @param createDiscountDto Données du code promo
-   * @returns Le code promo créé
-   */
+  // Créer un nouveau code promo
   async create(
     createDiscountDto: CreateDiscountDto,
   ): Promise<DiscountResponseDto> {
@@ -74,13 +65,7 @@ export class DiscountsService {
     return this.formatDiscount(discount);
   }
 
-  /**
-   * Récupérer tous les codes promo avec pagination
-   * @param page Numéro de page
-   * @param limit Nombre d'éléments par page
-   * @param isActive Filtrer par statut actif
-   * @returns Liste paginée des codes promo
-   */
+  // Récupérer tous les codes promo avec pagination
   async findAll(
     page: number = 1,
     limit: number = 10,
@@ -112,11 +97,7 @@ export class DiscountsService {
     };
   }
 
-  /**
-   * Récupérer un code promo par son ID
-   * @param id ID du code promo
-   * @returns Le code promo trouvé
-   */
+  // Récupérer un code promo par son ID
   async findOne(id: string): Promise<DiscountResponseDto> {
     const discount = await this.prisma.discount.findUnique({
       where: { id },
@@ -129,12 +110,7 @@ export class DiscountsService {
     return this.formatDiscount(discount);
   }
 
-  /**
-   * Mettre à jour un code promo
-   * @param id ID du code promo
-   * @param updateDiscountDto Données de mise à jour
-   * @returns Le code promo mis à jour
-   */
+  // Mettre à jour un code promo
   async update(
     id: string,
     updateDiscountDto: Partial<CreateDiscountDto>,
@@ -210,11 +186,7 @@ export class DiscountsService {
     return this.formatDiscount(updatedDiscount);
   }
 
-  /**
-   * Supprimer un code promo
-   * @param id ID du code promo
-   * @returns Message de confirmation
-   */
+  // Supprimer un code promo
   async remove(id: string): Promise<{ message: string }> {
     const discount = await this.prisma.discount.findUnique({
       where: { id },
@@ -231,11 +203,7 @@ export class DiscountsService {
     return { message: 'Code promo supprimé avec succès' };
   }
 
-  /**
-   * Valider un code promo
-   * @param validateDiscountDto Données de validation
-   * @returns Résultat de la validation
-   */
+  // Valider un code promo
   async validate(
     validateDiscountDto: ValidateDiscountDto,
   ): Promise<DiscountValidationDto> {
@@ -286,11 +254,7 @@ export class DiscountsService {
     };
   }
 
-  /**
-   * Appliquer un code promo à un montant
-   * @param applyDiscountDto Données pour l'application
-   * @returns Résultat de l'application
-   */
+  // Appliquer un code promo à un montant
   async apply(
     applyDiscountDto: ApplyDiscountDto,
   ): Promise<ApplyDiscountResultDto> {
@@ -344,11 +308,7 @@ export class DiscountsService {
     };
   }
 
-  /**
-   * Désactiver un code promo
-   * @param id ID du code promo
-   * @returns Le code promo désactivé
-   */
+  // Désactiver un code promo
   async deactivate(id: string): Promise<DiscountResponseDto> {
     const discount = await this.prisma.discount.findUnique({
       where: { id },
@@ -366,11 +326,7 @@ export class DiscountsService {
     return this.formatDiscount(updatedDiscount);
   }
 
-  /**
-   * Activer un code promo
-   * @param id ID du code promo
-   * @returns Le code promo activé
-   */
+  // Activer un code promo
   async activate(id: string): Promise<DiscountResponseDto> {
     const discount = await this.prisma.discount.findUnique({
       where: { id },
@@ -388,10 +344,7 @@ export class DiscountsService {
     return this.formatDiscount(updatedDiscount);
   }
 
-  /**
-   * Récupérer les statistiques des codes promo
-   * @returns Statistiques
-   */
+  // Récupérer les statistiques des codes promo
   async getStats(): Promise<{
     totalCodes: number;
     activeCodes: number;
@@ -429,11 +382,7 @@ export class DiscountsService {
     };
   }
 
-  /**
-   * Formater un code promo pour la réponse
-   * @param discount Code promo
-   * @returns Code promo formaté
-   */
+  // Formater un code promo pour la réponse
   private formatDiscount(discount: Discount): DiscountResponseDto {
     return {
       id: discount.id,

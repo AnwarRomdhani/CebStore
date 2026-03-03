@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './modules/users/users.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -24,19 +24,24 @@ import { ImagesModule } from './modules/images/images.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { SearchHistoryModule } from './modules/search-history/search-history.module';
 import { ChatFeedbackModule } from './modules/chat-feedback/chat-feedback.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60, // seconds
-        limit: 10, // 10 requests per 60 seconds
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          ttl: configService.get<number>('THROTTLE_TTL', 60),
+          limit: configService.get<number>('THROTTLE_LIMIT', 10),
+        },
+      ],
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -57,6 +62,7 @@ import { ChatFeedbackModule } from './modules/chat-feedback/chat-feedback.module
     WishlistModule,
     SearchHistoryModule,
     ChatFeedbackModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [

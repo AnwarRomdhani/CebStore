@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PersonalDataDto {
-  @ApiProperty({ description: 'ID de l\'utilisateur' })
+  @ApiProperty({ description: 'ID de lutilisateur' })
   id: string;
 
   @ApiProperty({ description: 'Email' })
@@ -16,13 +16,13 @@ export class PersonalDataDto {
   @ApiProperty({ description: 'Rôle' })
   role: string;
 
-  @ApiProperty({ description: 'Date d\'inscription' })
+  @ApiProperty({ description: 'Date dinscription' })
   createdAt: Date;
 
   @ApiProperty({ description: 'Nombre de commandes', type: Number })
   ordersCount: number;
 
-  @ApiProperty({ description: 'Nombre d\'avis', type: Number })
+  @ApiProperty({ description: 'Nombre davis', type: Number })
   reviewsCount: number;
 
   @ApiProperty({ description: 'Données complètes au format JSON' })
@@ -33,7 +33,7 @@ export class DataExportResponseDto {
   @ApiProperty({ description: 'Données personnelles exportées' })
   data: PersonalDataDto;
 
-  @ApiProperty({ description: 'Date d\'export' })
+  @ApiProperty({ description: 'Date dexport' })
   exportedAt: Date;
 
   @ApiProperty({ description: 'Format', example: 'JSON' })

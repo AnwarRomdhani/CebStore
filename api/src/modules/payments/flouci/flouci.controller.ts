@@ -1,8 +1,3 @@
-/**
- * Controller Flouci Payments
- * @description Expose les endpoints REST pour les paiements Flouci
- */
-
 import {
   Controller,
   Post,
@@ -53,9 +48,7 @@ export class FlouciController {
     private readonly webhookService: FlouciWebhookService,
   ) {}
 
-  /**
-   * Initier un paiement
-   */
+  // Initier un paiement
   @Post('initiate')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -81,12 +74,10 @@ export class FlouciController {
     @GetUser() user: User,
     @Body() dto: InitiatePaymentDto,
   ): Promise<PaymentInitiationResponseDto> {
-    return this.flouciService.initiatePayment(dto);
+    return this.flouciService.initiatePayment(user.id, dto);
   }
 
-  /**
-   * Webhook pour les notifications de paiement
-   */
+  // Webhook pour les notifications de paiement
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -106,9 +97,7 @@ export class FlouciController {
     return this.webhookService.processWebhook(dto, signature);
   }
 
-  /**
-   * Vérifier le statut d\'un paiement
-   */
+  // Vérifier le statut d\'un paiement
   @Post('verify')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -122,14 +111,13 @@ export class FlouciController {
     type: PaymentVerificationResponseDto,
   })
   async verifyPayment(
+    @GetUser() user: User,
     @Body() dto: VerifyPaymentDto,
   ): Promise<PaymentVerificationResponseDto> {
-    return this.flouciService.verifyPayment(dto);
+    return this.flouciService.verifyPayment(user.id, dto);
   }
 
-  /**
-   * Obtenir le statut complet d\'un paiement
-   */
+  // Obtenir le statut complet d\'un paiement
   @Get('status/:orderId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -147,14 +135,13 @@ export class FlouciController {
     type: PaymentStatusResponseDto,
   })
   async getPaymentStatus(
+    @GetUser() user: User,
     @Param('orderId') orderId: string,
   ): Promise<PaymentStatusResponseDto> {
-    return this.flouciService.getPaymentStatus(orderId);
+    return this.flouciService.getPaymentStatus(user.id, orderId);
   }
 
-  /**
-   * Annuler un paiement
-   */
+  // Annuler un paiement
   @Post('cancel')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -180,17 +167,17 @@ export class FlouciController {
     description: 'Paiement annulé',
   })
   async cancelPayment(
+    @GetUser() user: User,
     @Body('trackingId') trackingId: string,
   ): Promise<{ message: string }> {
-    return this.flouciService.cancelPayment(trackingId);
+    return this.flouciService.cancelPayment(user.id, trackingId);
   }
 
-  // ==================== ENDPOINTS DE TEST ====================
-
-  /**
-   * Simuler un paiement de test (sandbox)
-   */
+  //Simuler un paiement de test (sandbox)
   @Post('test/simulate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Simuler un paiement de test (sandbox uniquement)',
@@ -208,9 +195,7 @@ export class FlouciController {
     return this.flouciService.simulateTestPayment(dto);
   }
 
-  /**
-   * Obtenir la configuration du mode test
-   */
+  // Obtenir la configuration du mode test
   @Get('test/config')
   @ApiOperation({
     summary: 'Configuration du mode test',
@@ -230,11 +215,7 @@ export class FlouciController {
     });
   }
 
-  // ==================== ENDPOINTS ADMIN ====================
-
-  /**
-   * Obtenir les statistiques de paiement (Admin)
-   */
+  //Obtenir les statistiques de paiement (Admin)
   @Get('admin/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -253,35 +234,10 @@ export class FlouciController {
     pendingPayments: number;
     totalRevenue: number;
   }> {
-    const [total, completed, failed, pending, revenue] = await Promise.all([
-      this.flouciService['prisma'].payment.count(),
-      this.flouciService['prisma'].payment.count({
-        where: { status: 'COMPLETED' },
-      }),
-      this.flouciService['prisma'].payment.count({
-        where: { status: 'FAILED' },
-      }),
-      this.flouciService['prisma'].payment.count({
-        where: { status: 'PENDING' },
-      }),
-      this.flouciService['prisma'].payment.aggregate({
-        where: { status: 'COMPLETED' },
-        _sum: { amount: true },
-      }),
-    ]);
-
-    return {
-      totalPayments: total,
-      completedPayments: completed,
-      failedPayments: failed,
-      pendingPayments: pending,
-      totalRevenue: Number(revenue._sum.amount) || 0,
-    };
+    return this.flouciService.getPaymentStats();
   }
 
-  /**
-   * [ADMIN] Liste des paiements
-   */
+  // [ADMIN] Liste des paiements
   @Get('admin/payments')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -305,15 +261,13 @@ export class FlouciController {
     );
   }
 
-  /**
-   * [ADMIN] Détail d'un paiement
-   */
+  // [ADMIN] Détail d'un paiement
   @Get('admin/payments/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: '[ADMIN] Détail d\'un paiement',
+    summary: '[ADMIN] Détail dun paiement',
   })
   @ApiResponse({
     status: 200,
@@ -323,9 +277,7 @@ export class FlouciController {
     return this.flouciService.getPaymentDetail(id);
   }
 
-  /**
-   * [ADMIN] Rembourser un paiement
-   */
+  // [ADMIN] Rembourser un paiement
   @Post('admin/payments/:id/refund')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -345,9 +297,7 @@ export class FlouciController {
     return this.flouciService.refundPayment(id, amount, reason);
   }
 
-  /**
-   * [ADMIN] Configuration Flouci
-   */
+  // [ADMIN] Configuration Flouci
   @Get('admin/config')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -359,13 +309,11 @@ export class FlouciController {
     status: 200,
     description: 'Configuration actuelle',
   })
-  async getConfig() {
+  getConfig() {
     return this.flouciService.getConfig();
   }
 
-  /**
-   * [ADMIN] Tendance des paiements
-   */
+  // [ADMIN] Tendance des paiements
   @Get('admin/trends')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

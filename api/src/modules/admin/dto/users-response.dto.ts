@@ -2,16 +2,22 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 export class UserStatsDto {
-  @ApiProperty({ description: 'Nombre total d\'utilisateurs', example: 500 })
+  @ApiProperty({ description: 'Nombre total dutilisateurs', example: 500 })
   totalUsers: number;
 
-  @ApiProperty({ description: 'Nouveaux utilisateurs aujourd\'hui', example: 5 })
+  @ApiProperty({ description: 'Nouveaux utilisateurs aujourdhui', example: 5 })
   newToday: number;
 
-  @ApiProperty({ description: 'Nouveaux utilisateurs cette semaine', example: 35 })
+  @ApiProperty({
+    description: 'Nouveaux utilisateurs cette semaine',
+    example: 35,
+  })
   newThisWeek: number;
 
-  @ApiProperty({ description: 'Nouveaux utilisateurs ce mois-ci', example: 150 })
+  @ApiProperty({
+    description: 'Nouveaux utilisateurs ce mois-ci',
+    example: 150,
+  })
   newThisMonth: number;
 
   @ApiProperty({ description: 'Répartition par rôle', type: Object })
@@ -19,7 +25,7 @@ export class UserStatsDto {
 }
 
 export class UserListItemDto {
-  @ApiProperty({ description: 'ID de l\'utilisateur' })
+  @ApiProperty({ description: 'ID de lutilisateur' })
   id: string;
 
   @ApiProperty({ description: 'Email', example: 'user@example.com' })
@@ -40,7 +46,7 @@ export class UserListItemDto {
   @ApiProperty({ description: 'Dépenses totales', example: 1500.5 })
   totalSpent: number;
 
-  @ApiProperty({ description: 'Date d\'inscription' })
+  @ApiProperty({ description: 'Date dinscription' })
   createdAt: Date;
 
   @ApiProperty({ description: 'Dernière connexion', required: false })
@@ -48,7 +54,10 @@ export class UserListItemDto {
 }
 
 export class UsersListResponseDto {
-  @ApiProperty({ description: 'Liste des utilisateurs', type: [UserListItemDto] })
+  @ApiProperty({
+    description: 'Liste des utilisateurs',
+    type: [UserListItemDto],
+  })
   data: UserListItemDto[];
 
   @ApiProperty({ description: 'Nombre total', example: 500 })

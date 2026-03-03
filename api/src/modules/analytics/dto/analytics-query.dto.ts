@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 
 export class OverviewQueryDto {
   @ApiPropertyOptional({
-    description: 'Période d\'analyse',
+    description: 'Période danalyse',
     enum: ['day', 'week', 'month', 'year'],
     default: 'month',
   })
@@ -40,7 +40,11 @@ export class SalesTrendQueryDto {
 }
 
 export class PaginationDto {
-  @ApiPropertyOptional({ description: 'Limite de résultats', example: 10, default: 10 })
+  @ApiPropertyOptional({
+    description: 'Limite de résultats',
+    example: 10,
+    default: 10,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

@@ -1,8 +1,3 @@
-/**
- * Controller des workflows n8n
- * @description Expose les endpoints REST pour gérer les workflows n8n
- */
-
 import {
   Controller,
   Get,
@@ -39,10 +34,11 @@ import { Role } from '@prisma/client';
 export class WorkflowsController {
   constructor(private readonly workflowsService: WorkflowsService) {}
 
-  /**
-   * Déclencher un workflow personnalisé
-   */
+  // Déclencher un workflow personnalisé
   @Post('trigger')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Déclencher un workflow personnalisé',
     description: 'Envoie un événement à un webhook n8n spécifique',
@@ -59,10 +55,7 @@ export class WorkflowsController {
     return this.workflowsService.triggerWorkflow(dto);
   }
 
-  /**
-   * WORKFLOW 1: Confirmer une commande
-   * Envoie un email de confirmation au client
-   */
+  // WORKFLOW 1: Confirmer une commande
   @Post('order/confirmation')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -87,10 +80,7 @@ export class WorkflowsController {
     return this.workflowsService.triggerOrderConfirmation(dto.orderId);
   }
 
-  /**
-   * WORKFLOW 2: Alerte stock faible
-   * Notifie l'admin quand un produit est en rupture
-   */
+  // WORKFLOW 2: Alerte stock faible
   @Post('stock/alert')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -115,9 +105,7 @@ export class WorkflowsController {
     return this.workflowsService.triggerLowStockAlert(dto.productId);
   }
 
-  /**
-   * Vérifier tous les produits pour le stock
-   */
+  // Vérifier tous les produits pour le stock
   @Post('stock/check-all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -140,10 +128,7 @@ export class WorkflowsController {
     return this.workflowsService.checkAllProductsStock();
   }
 
-  /**
-   * WORKFLOW 3: Panier abandonné
-   * Notifie un client pour son panier nonconverti
-   */
+  // WORKFLOW 3: Panier abandonné
   @Post('cart/abandoned')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -164,9 +149,7 @@ export class WorkflowsController {
     return this.workflowsService.triggerAbandonedCartNotification(dto.cartId);
   }
 
-  /**
-   * Trouver et notifier tous les paniers abandonnés
-   */
+  // Trouver et notifier tous les paniers abandonnés
   @Post('cart/check-abandoned')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -187,9 +170,7 @@ export class WorkflowsController {
     return this.workflowsService.findAndNotifyAbandonedCarts();
   }
 
-  /**
-   * Vérifier la santé du service
-   */
+  // Vérifier la santé du service
   @Get('health')
   @ApiOperation({
     summary: 'Vérifier la santé du service',
@@ -204,9 +185,7 @@ export class WorkflowsController {
     return this.workflowsService.healthCheck();
   }
 
-  /**
-   * Liste des types d'événements disponibles
-   */
+  // Liste des types d'événements disponibles
   @Get('events')
   @ApiOperation({
     summary: 'Liste des événements disponibles',
@@ -227,11 +206,7 @@ export class WorkflowsController {
     return Object.values(WorkflowEventType);
   }
 
-  // ==================== ADMIN : SURVEILLANCE ====================
-
-  /**
-   * [ADMIN] Historique des exécutions de workflows
-   */
+  //[ADMIN] Historique des exécutions de workflows
   @Get('admin/history')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -244,13 +219,11 @@ export class WorkflowsController {
     status: 200,
     description: 'Historique des exécutions',
   })
-  async getWorkflowHistory() {
+  getWorkflowHistory() {
     return this.workflowsService.getWorkflowHistory();
   }
 
-  /**
-   * [ADMIN] Statistiques des workflows
-   */
+  // [ADMIN] Statistiques des workflows
   @Get('admin/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -262,13 +235,11 @@ export class WorkflowsController {
     status: 200,
     description: 'Statistiques',
   })
-  async getWorkflowStats() {
+  getWorkflowStats() {
     return this.workflowsService.getWorkflowStats();
   }
 
-  /**
-   * [ADMIN] Configuration des webhooks n8n
-   */
+  // [ADMIN] Configuration des webhooks n8n
   @Get('admin/webhooks')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -281,13 +252,11 @@ export class WorkflowsController {
     status: 200,
     description: 'Webhooks configurés',
   })
-  async getWebhooksConfig() {
+  getWebhooksConfig() {
     return this.workflowsService.getWebhooksConfig();
   }
 
-  /**
-   * [ADMIN] Tester un webhook
-   */
+  // [ADMIN] Tester un webhook
   @Post('admin/webhooks/:name/test')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

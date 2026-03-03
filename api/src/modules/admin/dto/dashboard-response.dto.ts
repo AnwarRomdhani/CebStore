@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DashboardSummaryDto {
-  @ApiProperty({ description: 'Chiffre d\'affaires du jour', example: 1250.5 })
+  @ApiProperty({ description: 'Chiffre daffaires du jour', example: 1250.5 })
   todayRevenue: number;
 
   @ApiProperty({ description: 'Commandes du jour', example: 15 })
@@ -30,7 +30,10 @@ export class RecentOrderDto {
   @ApiProperty({ description: 'Nom du client', example: 'Mohamed Ben Ali' })
   customerName: string;
 
-  @ApiProperty({ description: 'Email du client', example: 'client@example.com' })
+  @ApiProperty({
+    description: 'Email du client',
+    example: 'client@example.com',
+  })
   customerEmail: string;
 
   @ApiProperty({ description: 'Montant total', example: 250.75 })

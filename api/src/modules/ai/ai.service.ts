@@ -1,11 +1,13 @@
 import {
   Injectable,
   Logger,
+  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import OpenAI from 'openai';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as EmbeddingUtils from './utils/embedding.utils';
 import {
@@ -77,9 +79,7 @@ export class AiService {
     this.maxTokens = this.configService.get<number>('OPENAI_MAX_TOKENS', 1000);
   }
 
-  /**
-   * Générer un embedding pour un texte
-   */
+  // Générer un embedding pour un texte
   async generateEmbedding(
     dto: GenerateEmbeddingDto,
   ): Promise<EmbeddingResponseDto> {
@@ -130,9 +130,7 @@ export class AiService {
     }
   }
 
-  /**
-   * Sauvegarder un embedding dans la base de données
-   */
+  // Sauvegarder un embedding dans la base de données
   private convertDocumentType(docType: DocumentType): KnowledgeDocumentType {
     switch (docType) {
       case DocumentType.PRODUCT:
@@ -158,8 +156,7 @@ export class AiService {
     embedding: number[],
   ): Promise<void> {
     try {
-      const encodedEmbedding =
-        EmbeddingUtils.encodeEmbeddingToBase64(embedding);
+      const sqlVector = EmbeddingUtils.PgVectorUtils.toSqlVector(embedding);
 
       await this.prisma.$executeRaw`
         INSERT INTO ai_knowledge_base (id, content, document_type, embedding, created_at, updated_at)
@@ -167,7 +164,7 @@ export class AiService {
           ${documentId}::uuid,
           ${content},
           ${documentType.toString()}::text,
-          ${encodedEmbedding}::vector,
+          ${sqlVector}::vector,
           NOW(),
           NOW()
         )
@@ -183,9 +180,7 @@ export class AiService {
     }
   }
 
-  /**
-   * Effectuer une recherche sémantique
-   */
+  // Effectuer une recherche sémantique
   async semanticSearch(
     dto: SemanticSearchDto,
   ): Promise<SemanticSearchResponseDto> {
@@ -201,39 +196,41 @@ export class AiService {
         embeddingResponse.embedding,
       );
 
-      // Construire la requête SQL pour pgvector
-      const vectorStr = `[${queryEmbedding.join(',')}]`;
-      const limit = dto.limit || 10;
-      const threshold = dto.similarityThreshold || 0;
+      const sqlVector =
+        EmbeddingUtils.PgVectorUtils.toSqlVector(queryEmbedding);
+      const limit = dto.limit ?? 10;
+      const threshold = dto.similarityThreshold ?? 0;
 
-      let whereClause = `1=1`;
+      const conditions: Prisma.Sql[] = [Prisma.sql`embedding IS NOT NULL`];
       if (dto.documentTypes && dto.documentTypes.length > 0) {
-        const types = dto.documentTypes.map((t) => `'${t}'`).join(', ');
-        whereClause += ` AND document_type IN (${types})`;
+        conditions.push(
+          Prisma.sql`document_type = ANY(${dto.documentTypes}::text[])`,
+        );
       }
 
-      // Exécuter la recherche avec similarité cosinus
       const results = await this.prisma.$queryRaw<
         Array<{
           id: string;
           content: string;
           document_type: string;
-          metadata: string;
+          metadata: unknown;
           similarity: number;
         }>
-      >`
-        SELECT
-          id,
-          content,
-          document_type as "documentType",
-          metadata,
-          1 - (embedding <=> '${vectorStr}'::vector) as similarity
-        FROM ai_knowledge_base
-        WHERE ${whereClause}
-          AND 1 - (embedding <=> '${vectorStr}'::vector) > ${1 - threshold}
-        ORDER BY embedding <=> '${vectorStr}'::vector
-        LIMIT ${limit}
-      `;
+      >(
+        Prisma.sql`
+          SELECT
+            id,
+            content,
+            document_type,
+            metadata,
+            1 - (embedding <=> ${sqlVector}::vector) as similarity
+          FROM ai_knowledge_base
+          WHERE ${Prisma.join(conditions, ' AND ')}
+            AND 1 - (embedding <=> ${sqlVector}::vector) > ${threshold}
+          ORDER BY embedding <=> ${sqlVector}::vector
+          LIMIT ${limit}
+        `,
+      );
 
       const searchResults: SearchResultDto[] = results.map((row, index) => ({
         id: row.id,
@@ -261,9 +258,7 @@ export class AiService {
     }
   }
 
-  /**
-   * Chatbot conversationnel
-   */
+  // Chatbot conversationnel
   async chatbot(dto: ChatbotQueryDto): Promise<ChatbotResponseDto> {
     const startTime = Date.now();
 
@@ -376,11 +371,7 @@ RÈGLES:
     }
   }
 
-  // ==================== CHAT SESSIONS ====================
-
-  /**
-   * Créer une session de chat
-   */
+  //Créer une session de chat
   createChatSession(dto: CreateChatSessionDto): Promise<ChatSession> {
     const session: ChatSession = {
       id: crypto.randomUUID(),
@@ -394,9 +385,7 @@ RÈGLES:
     return Promise.resolve(session);
   }
 
-  /**
-   * Récupérer une session de chat
-   */
+  // Récupérer une session de chat
   getChatSession(sessionId: string): Promise<ChatSession> {
     // Récupérer depuis la base de données
     // Pour l'instant, retourner une session vide
@@ -409,22 +398,22 @@ RÈGLES:
     });
   }
 
-  /**
-   * Sauvegarder une session de chat
-   */
+  // Sauvegarder une session de chat
   saveChatSession(session: ChatSession): Promise<void> {
     session.updatedAt = new Date();
     // Sauvegarder en base de données
     return Promise.resolve();
   }
 
-  /**
-   * Générer des recommandations de produits (amélioré avec historique et sentiments)
-   */
+  // Générer des recommandations de produits (amélioré avec historique et sentiments)
   async getProductRecommendations(
     dto: RecommendationConfigDto,
   ): Promise<ProductRecommendationResponseDto> {
     try {
+      if (!dto.userId) {
+        throw new BadRequestException('userId is required');
+      }
+
       // 1. Récupérer l'historique d'achat de l'utilisateur
       const userPurchases = await this.prisma.order.findMany({
         where: {
@@ -488,9 +477,8 @@ RÈGLES:
         }
       }
 
-      const avgSentiment = userReviews.length > 0
-        ? sentimentScore / userReviews.length
-        : 0;
+      const avgSentiment =
+        userReviews.length > 0 ? sentimentScore / userReviews.length : 0;
 
       // Extraire les termes de recherche fréquents
       const searchTerms = searchHistory
@@ -570,9 +558,7 @@ RÈGLES:
     }
   }
 
-  /**
-   * Helper: Obtenir la raison de la recommandation
-   */
+  // Helper: Obtenir la raison de la recommandation
   private getRecommendationReason(query: string, sentiment: number): string {
     if (query.startsWith('catégorie:')) {
       return 'Basé sur vos achats précédents';
@@ -586,9 +572,7 @@ RÈGLES:
     return 'Recommandé pour vous';
   }
 
-  /**
-   * Analyser le sentiment d'un texte
-   */
+  // Analyser le sentiment d'un texte
   async analyzeSentiment(
     dto: SentimentAnalysisDto,
   ): Promise<SentimentAnalysisResponseDto> {
@@ -630,9 +614,7 @@ Retourne un JSON avec:
     }
   }
 
-  /**
-   * Analyse simple de sentiment (fallback)
-   */
+  // Analyse simple de sentiment (fallback)
   private simpleSentimentAnalysis(text: string): SentimentAnalysisResponseDto {
     const positiveWords = [
       'excellent',
@@ -685,9 +667,7 @@ Retourne un JSON avec:
     };
   }
 
-  /**
-   * Générer une description SEO
-   */
+  // Générer une description SEO
   async generateSEO(dto: SEOGenerationDto): Promise<SEOGenerationResponseDto> {
     try {
       const systemPrompt = `Génère une optimisation SEO complète pour ce produit.
@@ -746,9 +726,7 @@ Retourne un JSON avec:
     }
   }
 
-  /**
-   * Ajouter un document à la base de connaissances
-   */
+  // Ajouter un document à la base de connaissances
   async addKnowledgeDocument(
     dto: AddKnowledgeDocumentDto,
   ): Promise<KnowledgeDocumentResponseDto> {
@@ -760,6 +738,11 @@ Retourne un JSON avec:
         documentType: dto.documentType,
       });
 
+      const vector = EmbeddingUtils.decodeEmbeddingFromBase64(
+        embeddingResponse.embedding,
+      );
+      const sqlVector = EmbeddingUtils.PgVectorUtils.toSqlVector(vector);
+
       // Sauvegarder les métadonnées
       await this.prisma.$executeRaw`
         INSERT INTO ai_knowledge_base (id, content, document_type, metadata, embedding, created_at, updated_at)
@@ -768,7 +751,7 @@ Retourne un JSON avec:
           ${dto.content}::text,
           ${this.convertDocumentType(dto.documentType).toString()}::text,
           ${JSON.stringify(dto.metadata || {})}::jsonb,
-          ${embeddingResponse.embedding}::vector,
+          ${sqlVector}::vector,
           NOW(),
           NOW()
         )
@@ -789,9 +772,7 @@ Retourne un JSON avec:
     }
   }
 
-  /**
-   * Indexer un produit dans la base de connaissances
-   */
+  // Indexer un produit dans la base de connaissances
   async indexProduct(
     dto: IndexProductDto,
   ): Promise<KnowledgeDocumentResponseDto> {
@@ -820,9 +801,7 @@ Retourne un JSON avec:
     });
   }
 
-  /**
-   * Obtenir les statistiques de la base de connaissances
-   */
+  // Obtenir les statistiques de la base de connaissances
   async getKnowledgeBaseStats(): Promise<KnowledgeBaseStatsResponseDto> {
     try {
       const stats = await this.prisma.$queryRaw<
@@ -874,9 +853,7 @@ Retourne un JSON avec:
     }
   }
 
-  /**
-   * Extraire les recommandations de produits depuis les résultats de recherche
-   */
+  // Extraire les recommandations de produits depuis les résultats de recherche
   private extractProductRecommendations(
     results: SearchResultDto[],
   ): ProductRecommendation[] {
@@ -890,9 +867,7 @@ Retourne un JSON avec:
     }));
   }
 
-  /**
-   * Batch: Générer des embeddings pour plusieurs textes
-   */
+  // Batch: Générer des embeddings pour plusieurs textes
   async generateBatchEmbeddings(
     texts: string[],
   ): Promise<Array<{ text: string; embedding: string; dimension: number }>> {
@@ -910,11 +885,7 @@ Retourne un JSON avec:
     return results;
   }
 
-  /**
-   * Rechercher des produits similaires par requête textuelle
-   * Exemple: "chaussures pour homme" → retourne les produits similaires
-   * Utilise pgvector pour la recherche de similarité cosinus
-   */
+  // Rechercher des produits similaires par requête textuelle
   async searchSimilarProducts(dto: {
     query: string;
     limit?: number;
@@ -947,29 +918,26 @@ Retourne un JSON avec:
         embeddingResponse.embedding,
       );
 
-      // 2. Construire la requête SQL pour pgvector
-      const vectorStr = `[${queryEmbedding.join(',')}]`;
-      const limit = dto.limit || 10;
+      const sqlVector =
+        EmbeddingUtils.PgVectorUtils.toSqlVector(queryEmbedding);
+      const limit = dto.limit ?? 10;
 
-      // Construire les conditions WHERE
-      let whereConditions = 'p.is_active = true';
-
+      const conditions: Prisma.Sql[] = [Prisma.sql`p."isActive" = true`];
       if (dto.categoryIds && dto.categoryIds.length > 0) {
-        const categoryList = dto.categoryIds.map((id) => `'${id}'`).join(',');
-        whereConditions += ` AND p.category_id IN (${categoryList})`;
+        conditions.push(
+          Prisma.sql`p."categoryId" = ANY(${dto.categoryIds}::text[])`,
+        );
       }
-
       if (dto.excludeIds && dto.excludeIds.length > 0) {
-        const excludeList = dto.excludeIds.map((id) => `'${id}'`).join(',');
-        whereConditions += ` AND p.id NOT IN (${excludeList})`;
+        conditions.push(
+          Prisma.sql`NOT (p.id = ANY(${dto.excludeIds}::text[]))`,
+        );
       }
-
       if (dto.minPrice !== undefined) {
-        whereConditions += ` AND p.price >= ${dto.minPrice}`;
+        conditions.push(Prisma.sql`p.price >= ${dto.minPrice}`);
       }
-
       if (dto.maxPrice !== undefined) {
-        whereConditions += ` AND p.price <= ${dto.maxPrice}`;
+        conditions.push(Prisma.sql`p.price <= ${dto.maxPrice}`);
       }
 
       // 3. Exécuter la recherche vectorielle via le Knowledge Base
@@ -980,27 +948,31 @@ Retourne un JSON avec:
           name: string;
           description: string | null;
           price: number;
-          image_url: string | null;
-          category_name: string | null;
+          imageUrl: string | null;
+          categoryName: string | null;
           similarity: number;
         }>
-      >`
-        SELECT
-          p.id,
-          p.name,
-          p.description,
-          p.price,
-          p.image_url as "imageUrl",
-          c.name as "categoryName",
-          1 - (kb.embedding <=> '${vectorStr}'::vector) as similarity
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN ai_knowledge_base kb ON kb.metadata->>'productId' = p.id
-        WHERE ${whereConditions}
-          AND kb.metadata->>'productId' IS NOT NULL
-        ORDER BY kb.embedding <=> '${vectorStr}'::vector
-        LIMIT ${limit}
-      `;
+      >(
+        Prisma.sql`
+          SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p."imageUrl" as "imageUrl",
+            c."name" as "categoryName",
+            1 - (kb.embedding <=> ${sqlVector}::vector) as similarity
+          FROM "products" p
+          LEFT JOIN "categories" c ON p."categoryId" = c.id
+          LEFT JOIN ai_knowledge_base kb ON kb.metadata->>'productId' = p.id
+          WHERE ${Prisma.join(
+            [...conditions, Prisma.sql`kb.embedding IS NOT NULL`],
+            ' AND ',
+          )}
+          ORDER BY kb.embedding <=> ${sqlVector}::vector
+          LIMIT ${limit}
+        `,
+      );
 
       // 4. Si pas assez de résultats, rechercher dans tous les produits
       if (searchResults.length < limit) {
@@ -1010,25 +982,27 @@ Retourne un JSON avec:
             name: string;
             description: string | null;
             price: number;
-            image_url: string | null;
-            category_name: string | null;
+            imageUrl: string | null;
+            categoryName: string | null;
             similarity: number;
           }>
-        >`
-          SELECT
-            p.id,
-            p.name,
-            p.description,
-            p.price,
-            p.image_url as "imageUrl",
-            c.name as "categoryName",
-            0.5 as similarity
-          FROM products p
-          LEFT JOIN categories c ON p.category_id = c.id
-          WHERE ${whereConditions}
-          ORDER BY p.created_at DESC
-          LIMIT ${limit - searchResults.length}
-        `;
+        >(
+          Prisma.sql`
+            SELECT
+              p.id,
+              p.name,
+              p.description,
+              p.price,
+              p."imageUrl" as "imageUrl",
+              c."name" as "categoryName",
+              0.5 as similarity
+            FROM "products" p
+            LEFT JOIN "categories" c ON p."categoryId" = c.id
+            WHERE ${Prisma.join(conditions, ' AND ')}
+            ORDER BY p."createdAt" DESC
+            LIMIT ${limit - searchResults.length}
+          `,
+        );
 
         searchResults.push(...fallbackResults);
       }
@@ -1046,8 +1020,8 @@ Retourne un JSON avec:
           name: row.name,
           description: row.description,
           price: Number(row.price),
-          imageUrl: row.image_url,
-          categoryName: row.category_name,
+          imageUrl: row.imageUrl,
+          categoryName: row.categoryName,
           similarityScore: Number(row.similarity),
         })),
       };
@@ -1058,9 +1032,7 @@ Retourne un JSON avec:
     }
   }
 
-  /**
-   * Recherche de produits simple (fallback si pas de pgvector)
-   */
+  // Recherche de produits simple (fallback si pas de pgvector)
   private async fallbackProductSearch(dto: {
     query: string;
     limit?: number;

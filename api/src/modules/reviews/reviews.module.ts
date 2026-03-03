@@ -1,8 +1,3 @@
-/**
- * Module de gestion des avis clients
- * @description Configure les dépendances pour le module reviews
- */
-
 import { Module } from '@nestjs/common';
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';

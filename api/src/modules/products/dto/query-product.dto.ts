@@ -1,5 +1,3 @@
-// DTO for querying product
-
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {

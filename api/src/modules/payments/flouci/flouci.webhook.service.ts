@@ -1,9 +1,4 @@
-/**
- * Service de webhook Flouci
- * @description Gère spécifiquement les webhooks Flouci de manière découplée
- */
-
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -37,12 +32,7 @@ export class FlouciWebhookService {
       this.configService.get<string>('N8N_PAYMENT_WEBHOOK') || '';
   }
 
-  /**
-   * Traiter un webhook Flouci
-   * @param payload - Corps du webhook
-   * @param signature - Signature du webhook (header)
-   * @returns Résultat du traitement
-   */
+  // Traiter un webhook Flouci
   async processWebhook(
     payload: FlouciWebhookData,
     signature?: string,
@@ -60,6 +50,7 @@ export class FlouciWebhookService {
         this.logger.warn(
           `Invalid webhook signature for order tracking: ${payload.developer_tracking_id}`,
         );
+        throw new UnauthorizedException('Invalid webhook signature');
       }
 
       // 2. Extraire l'ID de commande
@@ -124,15 +115,15 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Vérifier la signature du webhook
-   */
+  // Vérifier la signature du webhook
   private verifyWebhookSignature(
     payload: FlouciWebhookData,
     signature?: string,
   ): boolean {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
     if (!this.webhookSecret || !signature) {
-      return true; // Pas de secret configuré, on accepte
+      return !isProduction;
     }
 
     try {
@@ -151,9 +142,7 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Extraire l'ID de commande du tracking ID
-   */
+  // Extraire l'ID de commande du tracking ID
   private extractOrderId(trackingId: string): string {
     try {
       return extractOrderIdFromTrackingId(trackingId);
@@ -163,18 +152,14 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Trouver le paiement par ID de commande
-   */
+  // Trouver le paiement par ID de commande
   private async findPaymentByOrderId(orderId: string) {
     return this.prisma.payment.findUnique({
       where: { orderId },
     });
   }
 
-  /**
-   * Vérifier si le webhook est un doublon
-   */
+  // Vérifier si le webhook est un doublon
   private isDuplicateWebhook(
     payment: { status: string; updatedAt: Date },
     payload: FlouciWebhookData,
@@ -191,9 +176,7 @@ export class FlouciWebhookService {
     return false;
   }
 
-  /**
-   * Mapper le statut Flouci vers notre enum
-   */
+  // Mapper le statut Flouci vers notre enum
   private mapStatus(
     status: FlouciTransactionStatus,
   ): 'PENDING' | 'COMPLETED' | 'FAILED' {
@@ -207,9 +190,7 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Mettre à jour le paiement
-   */
+  // Mettre à jour le paiement
   private async updatePayment(
     paymentId: string,
     status: 'PENDING' | 'COMPLETED' | 'FAILED',
@@ -220,9 +201,7 @@ export class FlouciWebhookService {
     });
   }
 
-  /**
-   * Gérer un paiement réussi
-   */
+  // Gérer un paiement réussi
   private async handleSuccessfulPayment(
     orderId: string,
     _payment: { id: string; userId: string; amount: Prisma.Decimal },
@@ -241,9 +220,7 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Gérer un paiement échoué
-   */
+  // Gérer un paiement échoué
   private handleFailedPayment(
     orderId: string,
     payload: FlouciWebhookData,
@@ -251,9 +228,7 @@ export class FlouciWebhookService {
     this.logger.warn(`Payment failed for order ${orderId}: ${payload.status}`);
   }
 
-  /**
-   * Déclencher les workflows n8n
-   */
+  // Déclencher les workflows n8n
   private async triggerN8nWorkflow(
     orderId: string,
     status: string,
@@ -281,9 +256,7 @@ export class FlouciWebhookService {
     }
   }
 
-  /**
-   * Obtenir l'historique des webhooks pour un paiement
-   */
+  // Obtenir l'historique des webhooks pour un paiement
   getWebhookHistory(_orderId: string): Promise<
     Array<{
       timestamp: Date;

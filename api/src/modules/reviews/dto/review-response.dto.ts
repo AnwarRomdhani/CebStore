@@ -1,8 +1,3 @@
-/**
- * DTO pour la réponse d'un avis client
- * @description Format de données retourné après création ou récupération d'un avis
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReviewResponseDto {
@@ -61,9 +56,7 @@ export class ReviewResponseDto {
   updatedAt: Date;
 }
 
-/**
- * DTO pour la note moyenne d'un produit
- */
+// DTO pour la note moyenne d'un produit
 export class ProductRatingSummaryDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -102,9 +95,7 @@ export class ProductRatingSummaryDto {
   };
 }
 
-/**
- * DTO pour la réponse paginée des avis
- */
+// DTO pour la réponse paginée des avis
 export class PaginatedReviewsResponseDto {
   @ApiProperty({
     description: 'Liste des avis',

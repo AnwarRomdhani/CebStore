@@ -1,12 +1,6 @@
-/**
- * DTO pour l\'historique d\'achat
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Produit purchased dans l\'historique
- */
+// Produit purchased dans l\'historique
 export class PurchasedProductDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -63,9 +57,7 @@ export class PurchasedProductDto {
   productUrl?: string;
 }
 
-/**
- * Produit le plus acheté
- */
+// Produit le plus acheté
 export class TopPurchasedProductDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -98,9 +90,7 @@ export class TopPurchasedProductDto {
   orderCount: number;
 }
 
-/**
- * Résumé d\'une commande dans l\'historique
- */
+// Résumé d\'une commande dans l\'historique
 export class PurchaseHistoryItemDto {
   @ApiProperty({
     description: 'ID de la commande',
@@ -170,9 +160,7 @@ export class PurchaseHistoryItemDto {
   paymentMethod?: string;
 }
 
-/**
- * Statistiques d\'achat de l\'utilisateur
- */
+// Statistiques d\'achat de l\'utilisateur
 export class PurchaseStatsDto {
   @ApiProperty({
     description: 'Nombre total de commandes',
@@ -231,9 +219,7 @@ export class PurchaseStatsDto {
   topProducts: TopPurchasedProductDto[];
 }
 
-/**
- * Période d\'historique demandée
- */
+// Période d\'historique demandée
 export enum HistoryPeriod {
   LAST_30_DAYS = '30d',
   LAST_90_DAYS = '90d',
@@ -241,9 +227,7 @@ export enum HistoryPeriod {
   ALL_TIME = 'all',
 }
 
-/**
- * Paramètres pour l\'historique d\'achat
- */
+// Paramètres pour l\'historique d\'achat
 export class PurchaseHistoryQueryDto {
   @ApiPropertyOptional({
     description: 'Période',
@@ -285,9 +269,7 @@ export class PurchaseHistoryQueryDto {
   sortOrder?: 'asc' | 'desc' = 'desc';
 }
 
-/**
- * Réponse paginée de l\'historique d\'achat
- */
+// Réponse paginée de l\'historique d\'achat
 export class PurchaseHistoryResponseDto {
   @ApiProperty({
     description: 'Liste des commandes',
@@ -312,9 +294,7 @@ export class PurchaseHistoryResponseDto {
   stats?: PurchaseStatsDto;
 }
 
-/**
- * Produit recommandé basé sur l\'historique
- */
+// Produit recommandé basé sur l\'historique
 export class RecommendedProductDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -353,9 +333,7 @@ export class RecommendedProductDto {
   imageUrl?: string;
 }
 
-/**
- * Produit à racheter
- */
+// Produit à racheter
 export class ReorderProductDto {
   @ApiProperty({
     description: 'ID du produit',

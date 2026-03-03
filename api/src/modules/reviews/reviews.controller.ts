@@ -1,8 +1,3 @@
-/**
- * Contrôleur de gestion des avis clients
- * @description Expose les endpoints REST pour la gestion des avis
- */
-
 import {
   Body,
   Controller,
@@ -46,10 +41,7 @@ import type { User } from '@prisma/client';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  /**
-   * Créer un nouvel avis
-   * @description L'utilisateur doit avoir acheté le produit pour laisser un avis
-   */
+  // Créer un nouvel avis
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -83,9 +75,7 @@ export class ReviewsController {
     return await this.reviewsService.create(user.id, createReviewDto);
   }
 
-  /**
-   * Récupérer tous les avis d'un produit
-   */
+  // Récupérer tous les avis d'un produit
   @Get('product/:productId')
   @ApiOperation({
     summary: "Récupérer les avis d'un produit",
@@ -131,9 +121,7 @@ export class ReviewsController {
     );
   }
 
-  /**
-   * Récupérer le résumé des notes d'un produit
-   */
+  // Récupérer le résumé des notes d'un produit
   @Get('product/:productId/summary')
   @ApiOperation({
     summary: "Récupérer le résumé des notes d'un produit",
@@ -155,9 +143,7 @@ export class ReviewsController {
     return await this.reviewsService.getProductRatingSummary(productId);
   }
 
-  /**
-   * Récupérer mes avis
-   */
+  // Récupérer mes avis
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -196,9 +182,7 @@ export class ReviewsController {
     );
   }
 
-  /**
-   * Récupérer un avis par son ID
-   */
+  // Récupérer un avis par son ID
   @Get(':id')
   @ApiOperation({
     summary: 'Récupérer un avis par son ID',
@@ -221,9 +205,7 @@ export class ReviewsController {
     return await this.reviewsService.findOne(id);
   }
 
-  /**
-   * Mettre à jour son propre avis
-   */
+  // Mettre à jour son propre avis
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -258,9 +240,7 @@ export class ReviewsController {
     return await this.reviewsService.update(id, user.id, updateReviewDto);
   }
 
-  /**
-   * Supprimer son propre avis
-   */
+  // Supprimer son propre avis
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -292,9 +272,7 @@ export class ReviewsController {
     return await this.reviewsService.remove(id, user.id);
   }
 
-  /**
-   * Vérifier si l'utilisateur peut laisser un avis sur un produit
-   */
+  // Vérifier si l'utilisateur peut laisser un avis sur un produit
   @Get('can-review/:productId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -355,11 +333,7 @@ export class ReviewsController {
     };
   }
 
-  // ==================== ADMIN : MODÉRATION ====================
-
-  /**
-   * [ADMIN] Liste tous les avis avec modération
-   */
+  //[ADMIN] Liste tous les avis avec modération
   @Get('admin/all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -391,9 +365,7 @@ export class ReviewsController {
     );
   }
 
-  /**
-   * [ADMIN] Masquer un avis
-   */
+  // [ADMIN] Masquer un avis
   @Patch('admin/:id/hide')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -401,7 +373,7 @@ export class ReviewsController {
   @ApiOperation({
     summary: '[ADMIN] Masquer un avis',
   })
-  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiParam({ name: 'id', description: 'ID de lavis' })
   @ApiResponse({
     status: 200,
     description: 'Avis masqué',
@@ -411,9 +383,7 @@ export class ReviewsController {
     return await this.reviewsService.hideReview(id);
   }
 
-  /**
-   * [ADMIN] Approuver un avis
-   */
+  // [ADMIN] Approuver un avis
   @Patch('admin/:id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -421,7 +391,7 @@ export class ReviewsController {
   @ApiOperation({
     summary: '[ADMIN] Approuver un avis',
   })
-  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiParam({ name: 'id', description: 'ID de lavis' })
   @ApiResponse({
     status: 200,
     description: 'Avis approuvé',
@@ -431,9 +401,7 @@ export class ReviewsController {
     return await this.reviewsService.approveReview(id);
   }
 
-  /**
-   * [ADMIN] Supprimer définitivement un avis
-   */
+  // [ADMIN] Supprimer définitivement un avis
   @Delete('admin/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -442,7 +410,7 @@ export class ReviewsController {
   @ApiOperation({
     summary: '[ADMIN] Supprimer définitivement un avis',
   })
-  @ApiParam({ name: 'id', description: 'ID de l\'avis' })
+  @ApiParam({ name: 'id', description: 'ID de lavis' })
   @ApiResponse({
     status: 200,
     description: 'Avis supprimé',
@@ -452,9 +420,7 @@ export class ReviewsController {
     return { message: 'Avis supprimé définitivement' };
   }
 
-  /**
-   * [ADMIN] Statistiques des avis
-   */
+  // [ADMIN] Statistiques des avis
   @Get('admin/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

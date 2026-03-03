@@ -1,7 +1,3 @@
-/**
- * DTO pour les requêtes avancées de produits
- */
-
 import {
   IsString,
   IsOptional,
@@ -15,9 +11,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 
-/**
- * Ordre de tri
- */
+// Ordre de tri
 export enum ProductSortOrder {
   PRICE_ASC = 'price_asc',
   PRICE_DESC = 'price_desc',
@@ -30,9 +24,7 @@ export enum ProductSortOrder {
   STOCK_DESC = 'stock_desc',
 }
 
-/**
- * Filtres avancés pour la recherche de produits
- */
+// Filtres avancés pour la recherche de produits
 export class AdvancedQueryProductDto {
   @ApiPropertyOptional({
     description: 'Recherche textuelle dans nom et description',
@@ -176,9 +168,7 @@ export class AdvancedQueryProductDto {
   includeRelated?: boolean;
 }
 
-/**
- * Requête pour la recherche avec similarité (RAG)
- */
+// Requête pour la recherche avec similarité (RAG)
 export class SemanticSearchProductDto {
   @ApiProperty({
     description: 'Requête textuelle',
@@ -210,9 +200,7 @@ export class SemanticSearchProductDto {
   similarityThreshold?: number = 0;
 }
 
-/**
- * Filtres pour l\'administration
- */
+// Filtres pour l\'administration
 export class AdminProductQueryDto extends AdvancedQueryProductDto {
   @ApiPropertyOptional({
     description: 'Inclure les produits inactifs',
@@ -253,9 +241,7 @@ export class AdminProductQueryDto extends AdvancedQueryProductDto {
   outOfStock?: boolean;
 }
 
-/**
- * Paramètres pour la génération d\'embeddings de produits
- */
+// Paramètres pour la génération d\'embeddings de produits
 export class GenerateProductEmbeddingDto {
   @ApiProperty({
     description: 'ID du produit',
@@ -274,9 +260,7 @@ export class GenerateProductEmbeddingDto {
   regenerate?: boolean;
 }
 
-/**
- * Batch: Indexation de plusieurs produits
- */
+// Batch: Indexation de plusieurs produits
 export class BatchIndexProductsDto {
   @ApiProperty({
     description: 'IDs des produits à indexer',

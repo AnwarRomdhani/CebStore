@@ -1,11 +1,6 @@
-/**
- * Service d'optimisation d'images
- * @description Redimensionnement, compression et optimisation des images produits
- */
-
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-const sharp = require('sharp');
+import sharp from 'sharp';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -48,9 +43,7 @@ export class ImagesService {
     }
   }
 
-  /**
-   * Optimiser une image buffer
-   */
+  // Optimiser une image buffer
   async optimize(
     buffer: Buffer,
     options?: ImageOptions,
@@ -66,10 +59,10 @@ export class ImagesService {
       const image = sharp(buffer);
 
       // Récupérer les métadonnées
-      const metadata = await image.metadata();
+      const _metadata = await image.metadata();
 
       // Redimensionner si nécessaire
-      let processed = image.resize({
+      const processed = image.resize({
         width,
         height,
         fit: 'inside',
@@ -108,13 +101,11 @@ export class ImagesService {
       };
     } catch (error) {
       this.logger.error(`Erreur optimisation image: ${error.message}`);
-      throw new BadRequestException('Erreur lors de l\'optimisation de l\'image');
+      throw new BadRequestException('Erreur lors de loptimisation de limage');
     }
   }
 
-  /**
-   * Générer plusieurs variantes d'une image
-   */
+  // Générer plusieurs variantes d'une image
   async generateVariants(
     buffer: Buffer,
     filename: string,
@@ -146,9 +137,7 @@ export class ImagesService {
     return variants as ImageVariants;
   }
 
-  /**
-   * Sauvegarder une image
-   */
+  // Sauvegarder une image
   async save(
     buffer: Buffer,
     filename: string,
@@ -177,9 +166,7 @@ export class ImagesService {
     }
   }
 
-  /**
-   * Supprimer une image
-   */
+  // Supprimer une image
   async remove(filename: string): Promise<void> {
     try {
       const filePath = path.join(this.uploadDir, filename);
@@ -194,7 +181,10 @@ export class ImagesService {
       const variants = ['thumbnail_', 'medium_', 'large_'];
 
       for (const variant of variants) {
-        const variantPath = path.join(this.uploadDir, `${variant}${baseName}.webp`);
+        const variantPath = path.join(
+          this.uploadDir,
+          `${variant}${baseName}.webp`,
+        );
         if (fs.existsSync(variantPath)) {
           await fs.promises.unlink(variantPath);
         }
@@ -204,9 +194,7 @@ export class ImagesService {
     }
   }
 
-  /**
-   * Générer un nom de fichier unique
-   */
+  // Générer un nom de fichier unique
   generateFilename(originalName: string): string {
     const ext = path.extname(originalName).toLowerCase();
     const timestamp = Date.now();
@@ -214,9 +202,7 @@ export class ImagesService {
     return `${timestamp}_${random}${ext}`;
   }
 
-  /**
-   * Obtenir l'URL d'une image
-   */
+  // Obtenir l'URL d'une image
   private getUrl(filename: string): string {
     if (this.cdnUrl) {
       return `${this.cdnUrl}/${filename}`;
@@ -224,9 +210,7 @@ export class ImagesService {
     return `/uploads/images/${filename}`;
   }
 
-  /**
-   * Valider le type MIME d'une image
-   */
+  // Valider le type MIME d'une image
   isValidImage(mimetype: string): boolean {
     const validTypes = [
       'image/jpeg',
@@ -238,9 +222,7 @@ export class ImagesService {
     return validTypes.includes(mimetype.toLowerCase());
   }
 
-  /**
-   * Extraire les métadonnées d'une image
-   */
+  // Extraire les métadonnées d'une image
   async getMetadata(buffer: Buffer) {
     try {
       const metadata = await sharp(buffer).metadata();
@@ -249,9 +231,10 @@ export class ImagesService {
         height: metadata.height,
         format: metadata.format,
         size: buffer.length,
-        aspectRatio: metadata.width && metadata.height
-          ? (metadata.width / metadata.height).toFixed(2)
-          : null,
+        aspectRatio:
+          metadata.width && metadata.height
+            ? (metadata.width / metadata.height).toFixed(2)
+            : null,
       };
     } catch (error) {
       this.logger.error(`Erreur lecture métadonnées: ${error.message}`);

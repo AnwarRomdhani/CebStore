@@ -1,8 +1,3 @@
-/**
- * Contrôleur de gestion de l'historique des recherches
- * @description Endpoints pour l'historique et les tendances de recherche
- */
-
 import {
   Controller,
   Get,
@@ -30,9 +25,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 export class SearchHistoryController {
   constructor(private readonly searchHistoryService: SearchHistoryService) {}
 
-  /**
-   * Enregistrer une recherche (automatique via interceptor)
-   */
+  // Enregistrer une recherche (automatique via interceptor)
   @Post('log')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -57,7 +50,8 @@ export class SearchHistoryController {
   })
   async logSearch(
     @GetUser('id') userId: string,
-    @Body() body: { query: string; resultsCount: number; clickedProductId?: string },
+    @Body()
+    body: { query: string; resultsCount: number; clickedProductId?: string },
   ) {
     return this.searchHistoryService.logSearch(
       userId,
@@ -67,9 +61,7 @@ export class SearchHistoryController {
     );
   }
 
-  /**
-   * Obtenir mon historique de recherches
-   */
+  // Obtenir mon historique de recherches
   @Get('history')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -90,12 +82,13 @@ export class SearchHistoryController {
     @GetUser('id') userId: string,
     @Query('limit') limit?: number,
   ) {
-    return this.searchHistoryService.getUserHistory(userId, Number(limit) || 20);
+    return this.searchHistoryService.getUserHistory(
+      userId,
+      Number(limit) || 20,
+    );
   }
 
-  /**
-   * Recherches populaires (public)
-   */
+  // Recherches populaires (public)
   @Get('trends/popular')
   @ApiOperation({
     summary: 'Recherches populaires',
@@ -127,9 +120,7 @@ export class SearchHistoryController {
     );
   }
 
-  /**
-   * Tendances de recherche (admin)
-   */
+  // Tendances de recherche (admin)
   @Get('trends')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -144,15 +135,13 @@ export class SearchHistoryController {
     return this.searchHistoryService.getSearchTrends(userId);
   }
 
-  /**
-   * Nettoyer l'historique ancien (admin)
-   */
+  // Nettoyer l'historique ancien (admin)
   @Post('cleanup')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Nettoyer l\'historique ancien (Admin)',
+    summary: 'Nettoyer lhistorique ancien (Admin)',
   })
   @ApiQuery({
     name: 'days',

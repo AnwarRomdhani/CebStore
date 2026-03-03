@@ -1,12 +1,6 @@
-/**
- * DTO pour les réponses de paiement Flouci
- */
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-/**
- * Réponse de l\'initialisation du paiement
- */
+// Réponse de l\'initialisation du paiement
 export class PaymentInitiationResponseDto {
   @ApiProperty({
     description: "Succès de l'opération",
@@ -57,9 +51,7 @@ export class PaymentInitiationResponseDto {
   message?: string;
 }
 
-/**
- * Réponse de vérification du paiement
- */
+// Réponse de vérification du paiement
 export class PaymentVerificationResponseDto {
   @ApiProperty({
     description: 'Succès',
@@ -116,9 +108,7 @@ export class PaymentVerificationResponseDto {
   message?: string;
 }
 
-/**
- * Réponse du webhook
- */
+// Réponse du webhook
 export class WebhookResponseDto {
   @ApiProperty({
     description: 'Webhook reçu avec succès',
@@ -145,9 +135,7 @@ export class WebhookResponseDto {
   orderStatus?: string;
 }
 
-/**
- * Erreur de paiement
- */
+// Erreur de paiement
 export class PaymentErrorResponseDto {
   @ApiProperty({
     description: 'Succès',
@@ -174,9 +162,7 @@ export class PaymentErrorResponseDto {
   details?: Record<string, unknown>;
 }
 
-/**
- * Statut complet du paiement
- */
+// Statut complet du paiement
 export class PaymentStatusResponseDto {
   @ApiProperty({
     description: 'ID du paiement',
@@ -258,9 +244,7 @@ export class PaymentStatusResponseDto {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Configuration du mode test
- */
+// Configuration du mode test
 export class TestModeConfigResponseDto {
   @ApiProperty({
     description: 'Mode sandbox activé',

@@ -1,32 +1,13 @@
-/**
- * Utilitaires pour les embeddings
- * @description Fonctions pour manipuler et calculer les embeddings vectoriels
- */
-
-/**
- * Utilitaires pour les embeddings - logger disponible si besoin de debug
- */
-
-/**
- * Dimension par défaut pour les embeddings OpenAI
- */
+// Dimension par défaut pour les embeddings OpenAI
 export const DEFAULT_EMBEDDING_DIMENSION = 1536;
 
-/**
- * Dimension pour text-embedding-3-small
- */
+// Dimension pour text-embedding-3-small
 export const EMBEDDING_3_SMALL_DIMENSION = 1536;
 
-/**
- * Dimension pour text-embedding-3-large
- */
+//Dimension pour text-embedding-3-large
 export const EMBEDDING_3_LARGE_DIMENSION = 3072;
 
-/**
- * Encoder un vecteur en base64 pour stockage
- * @param embedding - Vecteur d'embedding
- * @returns Chaîne base64
- */
+//Encoder un vecteur en base64 pour stockage
 export function encodeEmbeddingToBase64(embedding: number[]): string {
   // Convertir en Float32Array pour réduire la taille
   const float32Array = new Float32Array(embedding);
@@ -34,23 +15,19 @@ export function encodeEmbeddingToBase64(embedding: number[]): string {
   return Buffer.from(uint8Array).toString('base64');
 }
 
-/**
- * Décoder un base64 en vecteur
- * @param base64 - Chaîne base64
- * @returns Vecteur d'embedding
- */
+//Décoder un base64 en vecteur
+
 export function decodeEmbeddingFromBase64(base64: string): number[] {
   const uint8Array = Buffer.from(base64, 'base64');
-  const float32Array = new Float32Array(uint8Array.buffer);
+  const float32Array = new Float32Array(
+    uint8Array.buffer,
+    uint8Array.byteOffset,
+    Math.floor(uint8Array.byteLength / Float32Array.BYTES_PER_ELEMENT),
+  );
   return Array.from(float32Array);
 }
 
-/**
- * Calculer la similarité cosinus entre deux vecteurs
- * @param a - Premier vecteur
- * @param b - Second vecteur
- * @returns Score de similarité (0-1)
- */
+//Calculer la similarité cosinus entre deux vecteurs
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same dimension');
@@ -75,11 +52,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / denominator;
 }
 
-/**
- * Normaliser un vecteur
- * @param vector - Vecteur à normaliser
- * @returns Vecteur normalisé
- */
+// Normaliser un vecteur
 export function normalizeVector(vector: number[]): number[] {
   let norm = 0;
   for (let i = 0; i < vector.length; i++) {
@@ -94,12 +67,7 @@ export function normalizeVector(vector: number[]): number[] {
   return vector.map((val) => val / norm);
 }
 
-/**
- * Calculer la distance euclidienne entre deux vecteurs
- * @param a - Premier vecteur
- * @param b - Second vecteur
- * @returns Distance euclidienne
- */
+// Calculer la distance euclidienne entre deux vecteurs
 export function euclideanDistance(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same dimension');
@@ -114,12 +82,7 @@ export function euclideanDistance(a: number[], b: number[]): number {
   return Math.sqrt(sum);
 }
 
-/**
- * Calculer le produit scalaire de deux vecteurs
- * @param a - Premier vecteur
- * @param b - Second vecteur
- * @returns Produit scalaire
- */
+// Calculer le produit scalaire de deux vecteurs
 export function dotProduct(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same dimension');
@@ -133,11 +96,7 @@ export function dotProduct(a: number[], b: number[]): number {
   return sum;
 }
 
-/**
- * Calculer la norme d'un vecteur
- * @param vector - Vecteur
- * @returns Norme du vecteur
- */
+// Calculer la norme d'un vecteur
 export function vectorNorm(vector: number[]): number {
   let sum = 0;
   for (let i = 0; i < vector.length; i++) {
@@ -146,12 +105,7 @@ export function vectorNorm(vector: number[]): number {
   return Math.sqrt(sum);
 }
 
-/**
- * Tronquer un vecteur à une dimension spécifiée
- * @param vector - Vecteur original
- * @param targetDimension - Dimension cible
- * @returns Vecteur tronqué
- */
+// Tronquer un vecteur à une dimension spécifiée
 export function truncateVector(
   vector: number[],
   targetDimension: number,
@@ -163,12 +117,7 @@ export function truncateVector(
   return vector.slice(0, targetDimension);
 }
 
-/**
- * среднее géométrique pour réduire les dimensions (approximation)
- * @param vectors - Vecteurs à fusionner
- * @param targetDimension - Dimension cible
- * @returns Vecteur fusionné
- */
+// approximation géométrique pour réduire les dimensions
 export function geometricMeanReduction(
   vectors: number[][],
   targetDimension: number,
@@ -203,11 +152,7 @@ export function geometricMeanReduction(
   return result;
 }
 
-/**
- * Moyenne arithmétique pour fusionner des vecteurs
- * @param vectors - Vecteurs à fusionner
- * @returns Vecteur moyen
- */
+// Moyenne arithmétique pour fusionner des vecteurs
 export function averageVectors(vectors: number[][]): number[] {
   if (vectors.length === 0) {
     return [];
@@ -225,12 +170,7 @@ export function averageVectors(vectors: number[][]): number[] {
   return result.map((val) => val / vectors.length);
 }
 
-/**
- * Pondérer des vecteurs par importance
- * @param vectors - Vecteurs à pondérer
- * @param weights - Pondérations correspondantes
- * @returns Vecteur pondéré moyen
- */
+// Pondérer des vecteurs par importance
 export function weightedAverage(
   vectors: number[][],
   weights: number[],
@@ -262,13 +202,7 @@ export function weightedAverage(
   return result.map((val) => val / totalWeight);
 }
 
-/**
- * Rechercher les k vecteurs les plus similaires
- * @param queryVector - Vecteur de requête
- * @param vectors - Vecteurs à comparer avec leurs IDs
- * @param topK - Nombre de résultats à retourner
- * @returns Résultats triés par similarité
- */
+// Rechercher les k vecteurs les plus similaires
 export function findTopKSimilar(
   queryVector: number[],
   vectors: Array<{ id: string; vector: number[] }>,
@@ -284,11 +218,7 @@ export function findTopKSimilar(
   return similarities.sort((a, b) => b.score - a.score).slice(0, topK);
 }
 
-/**
- * Vérifier si un vecteur est valide
- * @param vector - Vecteur à vérifier
- * @returns true si le vecteur est valide
- */
+// Vérifier si un vecteur est valide
 export function isValidVector(vector: unknown): boolean {
   if (!Array.isArray(vector)) {
     return false;
@@ -301,12 +231,7 @@ export function isValidVector(vector: unknown): boolean {
   return vector.every((val) => typeof val === 'number' && !isNaN(val));
 }
 
-/**
- * Compenser le biais de fréquence dans les embeddings
- * @param vector - Vecteur original
- * @param averageVector - Vecteur moyen du corpus
- * @returns Vecteur débiaisé
- */
+// Compenser le biais de fréquence dans les embeddings
 export function debiasVector(
   vector: number[],
   averageVector: number[],
@@ -318,11 +243,7 @@ export function debiasVector(
   return vector.map((val, i) => val - averageVector[i]);
 }
 
-/**
- * Parser le texte pour préparation à l'embedding
- * @param text - Texte à parser
- * @returns Texte nettoyé
- */
+// Parser le texte pour préparation à l'embedding
 export function preprocessTextForEmbedding(text: string): string {
   // Supprimer les caractères spéciaux excessifs
   let cleaned = text.replace(/[^\w\s\u00C0-\u00FF\-.,!?;:()[\]{}'"]/g, ' ');
@@ -353,13 +274,7 @@ export function preprocessTextForEmbedding(text: string): string {
   return cleaned.trim();
 }
 
-/**
- * Diviser un texte long en chunks pour l'embedding
- * @param text - Texte à diviser
- * @param chunkSize - Taille maximale de chaque chunk
- * @param overlap - Nombre de caractères à chevaucher
- * @returns Tableau de chunks
- */
+// Diviser un texte long en chunks pour l'embedding
 export function splitTextForEmbedding(
   text: string,
   chunkSize: number = 1000,
@@ -405,12 +320,7 @@ export function splitTextForEmbedding(
   return chunks;
 }
 
-/**
- * Générer un résumé condensé pour un texte
- * @param text - Texte à résumer
- * @param maxSentences - Nombre maximum de phrases
- * @returns Texte résumé
- */
+// Générer un résumé condensé pour un texte
 export function summarizeForEmbedding(
   text: string,
   maxSentences: number = 3,
@@ -432,26 +342,14 @@ export function summarizeForEmbedding(
   return [...firstSentences, ...lastSentences].join('. ') + '.';
 }
 
-/**
- * Classe utilitaire pour les opérations pgvector
- */
+// Classe utilitaire pour les opérations pgvector
 export class PgVectorUtils {
-  /**
-   * Convertir un vecteur en format SQL pour pgvector
-   * @param vector - Vecteur à convertir
-   * @returns Représentation SQL
-   */
+  // Convertir un vecteur en format SQL pour pgvector
   static toSqlVector(vector: number[]): string {
     return `[${vector.join(',')}]`;
   }
 
-  /**
-   * Créer la clause de similarité cosinus pour pgvector
-   * @param column - Nom de la colonne
-   * @param vector - Vecteur de référence
-   * @param threshold - Seuil minimum
-   * @returns Clause SQL
-   */
+  // Créer la clause de similarité cosinus pour pgvector
   static cosineSimilarityClause(
     column: string,
     vector: number[],
@@ -467,13 +365,7 @@ export class PgVectorUtils {
     return clause;
   }
 
-  /**
-   * Créer la clause de similarité L2 (euclidienne) pour pgvector
-   * @param column - Nom de la colonne
-   * @param vector - Vecteur de référence
-   * @param limit - Limite de distance
-   * @returns Clause SQL
-   */
+  // Créer la clause de similarité L2 (euclidienne) pour pgvector
   static euclideanDistanceClause(
     column: string,
     vector: number[],

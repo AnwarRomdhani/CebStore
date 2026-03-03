@@ -1,8 +1,3 @@
-/**
- * Service de gestion des avis clients
- * @description Gère la logique métier pour les avis produits
- */
-
 import {
   BadRequestException,
   ForbiddenException,
@@ -28,13 +23,7 @@ import { Prisma } from '@prisma/client';
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Créer un nouvel avis
-   * @description L'utilisateur doit avoir acheté le produit pour laisser un avis
-   * @param userId ID de l'utilisateur
-   * @param createReviewDto Données de l'avis
-   * @returns L'avis créé
-   */
+  // Créer un nouvel avis
   async create(
     userId: string,
     createReviewDto: CreateReviewDto,
@@ -94,13 +83,7 @@ export class ReviewsService {
     return this.formatReview(review);
   }
 
-  /**
-   * Récupérer tous les avis d'un produit avec pagination
-   * @param productId ID du produit
-   * @param page Numéro de page
-   * @param limit Nombre d'éléments par page
-   * @returns Liste paginée des avis avec résumé des notes
-   */
+  // Récupérer tous les avis d'un produit avec pagination
   async findByProduct(
     productId: string,
     page: number = 1,
@@ -152,11 +135,7 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * Récupérer un avis par son ID
-   * @param id ID de l'avis
-   * @returns L'avis trouvé
-   */
+  // Récupérer un avis par son ID
   async findOne(id: string): Promise<ReviewResponseDto> {
     const review = await this.prisma.review.findUnique({
       where: { id },
@@ -178,13 +157,7 @@ export class ReviewsService {
     return this.formatReview(review);
   }
 
-  /**
-   * Mettre à jour son propre avis
-   * @param id ID de l'avis
-   * @param userId ID de l'utilisateur
-   * @param updateReviewDto Données de mise à jour
-   * @returns L'avis mis à jour
-   */
+  // Mettre à jour son propre avis
   async update(
     id: string,
     userId: string,
@@ -222,12 +195,7 @@ export class ReviewsService {
     return this.formatReview(updatedReview);
   }
 
-  /**
-   * Supprimer son propre avis
-   * @param id ID de l'avis
-   * @param userId ID de l'utilisateur
-   * @returns Message de confirmation
-   */
+  // Supprimer son propre avis
   async remove(id: string, userId: string): Promise<{ message: string }> {
     const review = await this.prisma.review.findUnique({
       where: { id },
@@ -251,11 +219,7 @@ export class ReviewsService {
     return { message: 'Avis supprimé avec succès' };
   }
 
-  /**
-   * Récupérer le résumé des notes d'un produit
-   * @param productId ID du produit
-   * @returns Résumé des notes (moyenne, total, distribution)
-   */
+  // Récupérer le résumé des notes d'un produit
   async getProductRatingSummary(
     productId: string,
   ): Promise<ProductRatingSummaryDto> {
@@ -296,12 +260,7 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * Vérifier si un utilisateur a acheté un produit
-   * @param userId ID de l'utilisateur
-   * @param productId ID du produit
-   * @returns Informations sur l'achat
-   */
+  // Vérifier si un utilisateur a acheté un produit
   async verifyPurchase(
     userId: string,
     productId: string,
@@ -336,13 +295,7 @@ export class ReviewsService {
     return { hasPurchased: false };
   }
 
-  /**
-   * Récupérer les avis de l'utilisateur connecté
-   * @param userId ID de l'utilisateur
-   * @param page Numéro de page
-   * @param limit Nombre d'éléments par page
-   * @returns Liste paginée des avis de l'utilisateur
-   */
+  // Récupérer les avis de l'utilisateur connecté
   async findByUser(
     userId: string,
     page: number = 1,
@@ -386,11 +339,7 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * Analyser le sentiment d'un commentaire (simple analyse basée sur des mots-clés)
-   * @param comment Commentaire à analyser
-   * @returns Score de sentiment (-1 à 1)
-   */
+  // Analyser le sentiment d'un commentaire (simple analyse basée sur des mots-clés)
   analyzeSentiment(comment: string): number {
     if (!comment) return 0;
 
@@ -441,9 +390,7 @@ export class ReviewsService {
     return Math.max(-1, Math.min(1, score / (maxScore / 2)));
   }
 
-  /**
-   * [ADMIN] Liste tous les avis avec modération
-   */
+  // [ADMIN] Liste tous les avis avec modération
   async findAllForAdmin(
     page: number,
     limit: number,
@@ -456,7 +403,6 @@ export class ReviewsService {
     // Filtrer par statut (hidden ou non)
     if (status === 'hidden') {
       // Les avis cachés sont marqués avec un champ isHidden (à ajouter)
-      // Pour l'instant, on retourne tous
     } else if (status === 'approved') {
       // Uniquement les avis approuvés
     }
@@ -507,9 +453,7 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * [ADMIN] Masquer un avis
-   */
+  // [ADMIN] Masquer un avis
   async hideReview(id: string) {
     const review = await this.prisma.review.findUnique({ where: { id } });
 
@@ -521,7 +465,7 @@ export class ReviewsService {
     return this.prisma.review.update({
       where: { id },
       data: {
-        comment: '[Avis masqué par l\'administrateur]',
+        comment: '[Avis masqué par ladministrateur]',
       },
       include: {
         user: { select: { firstName: true, lastName: true } },
@@ -530,9 +474,7 @@ export class ReviewsService {
     });
   }
 
-  /**
-   * [ADMIN] Approuver un avis
-   */
+  // [ADMIN] Approuver un avis
   async approveReview(id: string) {
     const review = await this.prisma.review.findUnique({ where: { id } });
 
@@ -550,9 +492,7 @@ export class ReviewsService {
     });
   }
 
-  /**
-   * [ADMIN] Supprimer définitivement un avis
-   */
+  // [ADMIN] Supprimer définitivement un avis
   async deleteReviewAdmin(id: string) {
     const review = await this.prisma.review.findUnique({ where: { id } });
 
@@ -563,22 +503,27 @@ export class ReviewsService {
     await this.prisma.review.delete({ where: { id } });
   }
 
-  /**
-   * [ADMIN] Statistiques des avis
-   */
+  // [ADMIN] Statistiques des avis
   async getStats() {
-    const [total, averageRating, with5Stars, with4Stars, with3Stars, with2Stars, with1Star] =
-      await Promise.all([
-        this.prisma.review.count(),
-        this.prisma.review.aggregate({
-          _avg: { rating: true },
-        }),
-        this.prisma.review.count({ where: { rating: 5 } }),
-        this.prisma.review.count({ where: { rating: 4 } }),
-        this.prisma.review.count({ where: { rating: 3 } }),
-        this.prisma.review.count({ where: { rating: 2 } }),
-        this.prisma.review.count({ where: { rating: 1 } }),
-      ]);
+    const [
+      total,
+      averageRating,
+      with5Stars,
+      with4Stars,
+      with3Stars,
+      with2Stars,
+      with1Star,
+    ] = await Promise.all([
+      this.prisma.review.count(),
+      this.prisma.review.aggregate({
+        _avg: { rating: true },
+      }),
+      this.prisma.review.count({ where: { rating: 5 } }),
+      this.prisma.review.count({ where: { rating: 4 } }),
+      this.prisma.review.count({ where: { rating: 3 } }),
+      this.prisma.review.count({ where: { rating: 2 } }),
+      this.prisma.review.count({ where: { rating: 1 } }),
+    ]);
 
     return {
       total,
@@ -593,11 +538,7 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * Formater un avis pour la réponse
-   * @param review Avis avec relations
-   * @returns Avis formaté
-   */
+  // Formater un avis pour la réponse
   private formatReview(
     review: ReviewWithUser & {
       product?: {

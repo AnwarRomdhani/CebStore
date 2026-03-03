@@ -1,8 +1,3 @@
-/**
- * Contrôleur de gestion des listes de souhaits (Wishlist)
- * @description Endpoints pour gérer les produits favoris des utilisateurs
- */
-
 import {
   Controller,
   Get,
@@ -35,13 +30,11 @@ import { WishlistResponseDto } from './dto/wishlist-response.dto';
 export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
-  /**
-   * Obtenir ma wishlist
-   */
+  // Obtenir ma wishlist
   @Get()
   @ApiOperation({
     summary: 'Obtenir ma wishlist',
-    description: 'Récupère la liste des produits favoris de l\'utilisateur',
+    description: 'Récupère la liste des produits favoris de lutilisateur',
   })
   @ApiResponse({
     status: 200,
@@ -52,9 +45,7 @@ export class WishlistController {
     return this.wishlistService.getWishlist(userId);
   }
 
-  /**
-   * Ajouter un produit à la wishlist
-   */
+  //Ajouter un produit à la wishlist
   @Post('items')
   @ApiOperation({
     summary: 'Ajouter un produit à la wishlist',
@@ -68,16 +59,11 @@ export class WishlistController {
     status: 409,
     description: 'Produit déjà dans la wishlist',
   })
-  async addItem(
-    @GetUser('id') userId: string,
-    @Body() dto: AddToWishlistDto,
-  ) {
+  async addItem(@GetUser('id') userId: string, @Body() dto: AddToWishlistDto) {
     return this.wishlistService.addItem(userId, dto);
   }
 
-  /**
-   * Retirer un produit de la wishlist (par ID d'élément)
-   */
+  // Retirer un produit de la wishlist (par ID d'élément)
   @Delete('items/:itemId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -85,7 +71,7 @@ export class WishlistController {
   })
   @ApiParam({
     name: 'itemId',
-    description: 'ID de l\'élément dans la wishlist',
+    description: 'ID de lélément dans la wishlist',
   })
   @ApiResponse({
     status: 200,
@@ -98,9 +84,7 @@ export class WishlistController {
     return this.wishlistService.removeItem(userId, itemId);
   }
 
-  /**
-   * Retirer un produit de la wishlist (par ID de produit)
-   */
+  // Retirer un produit de la wishlist (par ID de produit)
   @Delete('product/:productId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -121,9 +105,7 @@ export class WishlistController {
     return this.wishlistService.removeProduct(userId, productId);
   }
 
-  /**
-   * Vider la wishlist
-   */
+  // Vider la wishlist
   @Delete()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -137,9 +119,7 @@ export class WishlistController {
     return this.wishlistService.clearWishlist(userId);
   }
 
-  /**
-   * Vérifier si un produit est dans la wishlist
-   */
+  // Vérifier si un produit est dans la wishlist
   @Get('check/:productId')
   @ApiOperation({
     summary: 'Vérifier si un produit est dans la wishlist',

@@ -13,10 +13,14 @@ export class ProductSalesDto {
   @ApiProperty({ description: 'Quantité vendue', example: 150 })
   quantitySold: number;
 
-  @ApiProperty({ description: 'Chiffre d\'affaires généré', example: 14998.5 })
+  @ApiProperty({ description: "Chiffre d'affaires généré", example: 14998.5 })
   revenue: number;
 
-  @ApiProperty({ description: 'URL de l\'image', example: 'https://example.com/image.jpg', required: false })
+  @ApiProperty({
+    description: "URL de l'image",
+    example: 'https://example.com/image.jpg',
+    required: false,
+  })
   imageUrl?: string;
 
   @ApiProperty({ description: 'Nom de la catégorie', example: 'Électronique' })
@@ -24,7 +28,10 @@ export class ProductSalesDto {
 }
 
 export class BestSellersResponseDto {
-  @ApiProperty({ description: 'Liste des produits les plus vendus', type: [ProductSalesDto] })
+  @ApiProperty({
+    description: 'Liste des produits les plus vendus',
+    type: [ProductSalesDto],
+  })
   data: ProductSalesDto[];
 
   @ApiProperty({ description: 'Nombre total de produits', example: 10 })
